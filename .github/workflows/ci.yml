@@ -54,7 +54,7 @@ jobs:
           job-status: success
 
       - name: 실행 권한 부여
-        run: chmod +x gradlew
+        run: chmod +x ./gradlew
 
       - name: properties 생성
         run: |
@@ -63,6 +63,4 @@ jobs:
           cat ./src/main/resources/application.yml
 
       - name: 빌드 진행
-        uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
-        with:
-          arguments: build
+        run: ./gradlew build
