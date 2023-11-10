@@ -28,3 +28,9 @@ jobs:
             echo "Only pushes from dev branch are allowed to main."
             exit 1
           fi
+
+          if [ "$head_branch" == "dev" ]; then
+            echo "PRs from dev branch are allowed to main."
+          else
+            echo "Only pushes from dev branch are allowed to main."
+          fi
