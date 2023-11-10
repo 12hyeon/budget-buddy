@@ -9,12 +9,6 @@ on:
 permissions:
   contents: read
 
-env:
-  AWS_REGION: ap-northeast-2
-  S3_BUCKET_NAME: private-hyeon-bucket
-  CODE_DEPLOY_APPLICATION_NAME: CICD_TEST_CD
-  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: CICD-TEST-GROUP
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -51,7 +45,13 @@ jobs:
       - name: JDK 17 세팅
         uses: actions/setup-java@v2
         with:
-          java-version: '17'
+          java-version: 17
+          java-package: jdk
+          architecture: x64
+          check-latest: false
+          server-id: github
+          overwrite-settings: true
+          job-status: success
 
       - name: 실행 권한 부여
         run: chmod +x gradlew
