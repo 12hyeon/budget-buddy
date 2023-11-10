@@ -4,7 +4,6 @@ on:
   pull_request_target:
     branches:
       - main
-      - dev
   push:
     branches:
       - main
@@ -27,10 +26,4 @@ jobs:
           elif [ "$push_branch" != "dev" ]; then
             echo "Only pushes from dev branch are allowed to main."
             exit 1
-          fi
-
-          if [ "$head_branch" == "dev" ]; then
-            echo "PRs from dev branch are allowed to main."
-          else
-            echo "Only pushes from dev branch are allowed to main."
           fi
