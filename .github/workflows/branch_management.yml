@@ -1,0 +1,36 @@
+name: branch 관리
+
+on:
+  pull_request_target:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+
+jobs:
+  enforce-branch-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR or Push branch
+        run: |
+          base_branch=$(jq -r '.pull_request.base.ref' "$GITHUB_EVENT_PATH")
+          head_branch=$(jq -r '.pull_request.head.ref' "$GITHUB_EVENT_PATH")
+          push_branch=$(echo $GITHUB_REF | awk -F'/' '{print $3}')
+
+          if [ "$base_branch" == "main" ]; then
+            if [ "$head_branch" != "dev" ]; then
+              echo "PRs to main branch are only allowed from the dev branch."
+              exit 1
+            fi
+          elif [ "$push_branch" != "dev" ]; then
+            echo "Only pushes from dev branch are allowed to main."
+            exit 1
+          fi
+
+          if [ "$head_branch" == "dev" ]; then
+            echo "PRs from dev branch are allowed to main."
+          else
+            echo "Only pushes from dev branch are allowed to main."
+          fi
