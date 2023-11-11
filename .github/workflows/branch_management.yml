@@ -1,36 +1,22 @@
 name: branch 관리
 
 on:
-  push:
+  pull_request_target:
     branches:
       - main
-      - dev
-      - '*'
 
 jobs:
-  check-branch:
+  enforce-branch-rules:
     runs-on: ubuntu-latest
     steps:
-      - name: Check Branch
+      - name: Check PR branch
         run: |
-          if [[ ${{ github.event_name }} == 'push' ]]; then
-            if [[ ${{ github.ref }} == 'refs/heads/main' && ${{ github.actor }} != 'your-dev-branch-bot' ]]; then
-              echo "Push to main branch is allowed only from the 'dev' branch.";
-              exit 1;
-            elif [[ ${{ github.ref }} == 'refs/heads/dev' ]]; then
-              echo "Push to 'dev' branch is allowed.";
-            else
-              echo "Pushing to dev branch from this branch.";
-              git push origin HEAD:dev;
+          base_branch=$(jq -r '.pull_request.base.ref' "$GITHUB_EVENT_PATH")
+          head_branch=$(jq -r '.pull_request.head.ref' "$GITHUB_EVENT_PATH")
+
+          if [ "$base_branch" == "main" ]; then
+            if [ "$head_branch" != "dev" ]; then
+              echo "PRs to main branch are only allowed from the dev branch."
+              exit 1
             fi
-          elif [[ ${{ github.event_name }} == 'pull_request' ]]; then
-            if [[ ${{ github.base_ref }} == 'dev' ]]; then
-              echo "Pull requests to main branch are allowed only from the 'dev' branch.";
-            else
-              echo "Pull requests from this branch are not allowed.";
-              exit 1;
-            fi
-          else
-            echo "Unsupported event.";
-            exit 1;
           fi
