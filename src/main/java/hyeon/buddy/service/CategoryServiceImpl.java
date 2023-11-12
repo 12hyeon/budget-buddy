@@ -39,6 +39,16 @@ public class CategoryServiceImpl implements CategoryService {
             throw new CustomException(ExceptionCode.CATEGORY_EXCEEDED_COUNT);
         }
 
+        String title = dto.getTitle();
+        List<String> existingCategories = CategoryToList();
+
+        // 기존 카테고리가 새 카테고리에 포함되는지 확인
+        for(String ctg : existingCategories) {
+            if (title.contains(ctg)) {
+                throw new CustomException(ExceptionCode.CATEGORY_DUPLICATED_TITLE);
+            }
+        }
+
         categoryRepository.save(Category.from(dto));
 
         return new ExceptionResponse(ExceptionCode.CATEGORY_CREATED);
@@ -48,10 +58,15 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponseDTO findCategories() {
 
-        List<String> category = categoryRepository.findAll().stream()
-                .map(Category::getTitle).collect(Collectors.toList());
+        List<String> category = CategoryToList();
 
         return new CategoryResponseDTO(ExceptionCode.CATEGORY_FOUND_OK, category);
 
+    }
+
+    private List<String> CategoryToList() {
+
+        return categoryRepository.findAll().stream().map(Category::getTitle)
+                .collect(Collectors.toList());
     }
 }
