@@ -3,15 +3,13 @@ package hyeon.buddy.domain;
 import hyeon.buddy.dto.UserSignUpRequestDTO;
 import hyeon.buddy.enums.UserRole;
 import hyeon.buddy.enums.UserStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import jakarta.persistence.*;
 
 @Entity
 @Builder
+@Getter
 @Table(name = "user")
 @ToString(callSuper = true)
 @AllArgsConstructor

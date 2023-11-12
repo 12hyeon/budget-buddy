@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 
 @Configuration
 @OpenAPIDefinition(
@@ -27,6 +28,17 @@ public class SwaggerConfig { // http://localhost:8080/swagger-ui/index.html
                 .group("Budget Buddy API v1")
                 .pathsToMatch(paths)
                 .build();
+    }
+
+    /* swagger-ui 페이지 연결 핸들러 설정 */
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry
+                .addResourceHandler("/swagger-ui.html")
+                .addResourceLocations("classpath:/META-INF/resources/");
+
+        registry
+                .addResourceHandler("/webjars/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/");
     }
 }
 
