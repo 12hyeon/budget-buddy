@@ -69,4 +69,3 @@ public class SecurityConfig {
         return new TokenAuthenticationFilter(tokenProvider, userDetailsService);
     }
 }
-
