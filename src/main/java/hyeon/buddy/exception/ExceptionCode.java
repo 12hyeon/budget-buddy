@@ -33,6 +33,7 @@ public enum ExceptionCode {
     TOKEN_EMPTY_CLAIMS_STRING(HttpStatus.UNAUTHORIZED, "T004", "토큰 클레임 문자열이 비어 있음 오류입니다."),
     TOKEN_SUCCESS(HttpStatus.OK, "T005", "토큰 확인이 성공했습니다."),
     TOKEN_REISSUED(HttpStatus.CREATED, "T006", "토큰 재발급에 성공했습니다."),
+    TOKEN_NOT_FOUND(HttpStatus.CREATED, "T007", "재 로그인이 필요합니다."),
     ;
 
     private final HttpStatus status;

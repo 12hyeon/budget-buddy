@@ -1,13 +1,16 @@
 package hyeon.buddy.dto;
 
 import hyeon.buddy.exception.ExceptionCode;
-import lombok.AllArgsConstructor;
+import hyeon.buddy.exception.ExceptionResponse;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor
 public
-class TokenResponseDTO {
-    private ExceptionCode code;
-    private TokenDTO token;
+class TokenResponseDTO extends ExceptionResponse {
+    private final TokenDTO token;
+
+    public TokenResponseDTO(ExceptionCode exceptionCode, TokenDTO token) {
+        super(exceptionCode);
+        this.token = token;
+    }
 }

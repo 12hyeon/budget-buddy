@@ -1,9 +1,9 @@
 package hyeon.buddy.config;
 
-import hyeon.buddy.config.handler.JwtAccessDeniedHandler;
-import hyeon.buddy.config.handler.JwtAuthenticationEntryPoint;
-import hyeon.buddy.config.security.TokenAuthenticationFilter;
-import hyeon.buddy.config.security.TokenProvider;
+import hyeon.buddy.security.JwtAccessDeniedHandler;
+import hyeon.buddy.security.JwtAuthenticationEntryPoint;
+import hyeon.buddy.security.TokenAuthenticationFilter;
+import hyeon.buddy.security.TokenProvider;
 import hyeon.buddy.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -30,7 +30,7 @@ public class SecurityConfig {
              "/swagger-ui", "/swagger-config", "/swagger-ui/index.html"
     };
     private static final String[] WHITE_LIST = {
-            "/api/v1/swagger", "/api/v1/user/sign-up", "/api/v1/user/sign-in"
+            "/api/v1/user"
     };
 
     // Security 필터 체인 설정

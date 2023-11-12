@@ -1,15 +1,12 @@
 package hyeon.buddy.service;
 
-import hyeon.buddy.config.security.TokenProvider;
 import hyeon.buddy.domain.User;
-import hyeon.buddy.dto.TokenDTO;
-import hyeon.buddy.dto.UserSignInRequestDTO;
-import hyeon.buddy.dto.UserSignInResponseDTO;
-import hyeon.buddy.dto.UserSignUpRequestDTO;
+import hyeon.buddy.dto.*;
 import hyeon.buddy.exception.CustomException;
 import hyeon.buddy.exception.ExceptionCode;
 import hyeon.buddy.exception.ExceptionResponse;
 import hyeon.buddy.repository.UserRepository;
+import hyeon.buddy.security.TokenProvider;
 import hyeon.buddy.utility.Validation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +21,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
     private final TokenProvider tokenProvider;
+    private final RedisService redisService;
 
     /**
      * 회원가입
@@ -100,25 +97,46 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new CustomException(ExceptionCode.USER_LOGIN_FAILED));
 
         // token 발급
-        TokenDTO tokenDto = createTokens(user.getId(), user.getAccount());
+        TokenDTO tokenDto = createTokens(user.getId());
 
-        // userId & RT redis에 저장 및 비교
-        log.info("userId : " + tokenDto.getUserId());
-        log.info("RT : " + tokenDto.getRefreshToken());
+        // id 기준 RT를 redis에 저장
+        redisService.saveRefreshToken(user.getId(), tokenDto.getRefreshToken());
 
         return new UserSignInResponseDTO(ExceptionCode.USER_LOGIN_SUCCEED, tokenDto);
     }
 
-    public TokenDTO createTokens(Long userId, String account) { // token 발급
+    public TokenDTO createTokens(Long userId) { // token 발급
 
-        String accessToken = tokenProvider.createToken( userId, account, Boolean.FALSE); // access
-        String refreshToken = tokenProvider.createToken(userId, account, Boolean.TRUE); // refresh
+        String accessToken = tokenProvider.createToken( userId, Boolean.FALSE); // access
+        String refreshToken = tokenProvider.createToken(userId, Boolean.TRUE); // refresh
 
         return TokenDTO.builder()
                 .userId(userId)
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();
+    }
+
+    /**
+     * 토큰 재발급 또는 재 로그인 요청
+     *
+     * @param id 요청한 유저의 id
+     * @return 재발급된 token
+     */
+    @Override
+    @Transactional
+    public TokenResponseDTO reissue(Long id) {
+
+        // redis : 10일, RT : 20일
+        // RT가 기한이 남고 redis TTL이 지난 경우, 재 로그인 요청
+        redisService.checkRefreshToken(id);
+
+        TokenDTO tokenDto = createTokens(id);
+
+        // redis에 새로운 RT 저장
+        redisService.saveRefreshToken(id, tokenDto.getRefreshToken());
+
+        return new TokenResponseDTO(ExceptionCode.TOKEN_REISSUED, tokenDto);
     }
 
 }
