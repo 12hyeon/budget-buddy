@@ -57,7 +57,7 @@ jobs:
           server-password: GITHUB_TOKEN
 
       - name: 실행 권한 부여
-        run: chmod +x ./gradlew
+        run: chmod +x ./gradlew --refresh-dependencies
 
       - name: properties 생성
         run: |
