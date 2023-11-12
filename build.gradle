@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.4'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.4' // ci에 따른 버전 하향
 	implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
 	implementation 'javax.servlet:javax.servlet-api:4.0.1'
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
