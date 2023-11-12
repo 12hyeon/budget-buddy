@@ -28,30 +28,24 @@ public class GlobalExceptionHandler {
     // CustomException 예외
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ExceptionResponse> handleCustomException(CustomException exception) {
-        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
-                .exceptionCode(exception.getExceptionCode())
-                .message(exception.getMessage())
-                .build();
+        ExceptionResponse exceptionResponse = new ExceptionResponse(exception.getExceptionCode());
 
         log.error(exception.getMessage(),exception);
 
         return ResponseEntity
-                .status(exceptionResponse.getExceptionCode().getStatus())
+                .status(exceptionResponse.getStatus())
                 .body(exceptionResponse);
     }
 
     // 정의되지 않은 예외 발생
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionResponse> undefinedException(Exception exception) {
-        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
-                .message(exception.getMessage())
-                .exceptionCode(ExceptionCode.UNDEFINED_EXCEPTION)
-                .build();
+        ExceptionResponse exceptionResponse = new ExceptionResponse(ExceptionCode.UNDEFINED_EXCEPTION);
 
         log.error(exception.getMessage(),exception);
 
         return ResponseEntity
-                .status(exceptionResponse.getExceptionCode().getStatus())
+                .status(exceptionResponse.getStatus())
                 .body(exceptionResponse);
     }
 }
