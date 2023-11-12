@@ -125,11 +125,11 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public TokenResponseDTO reissue(Long id) {
+    public TokenResponseDTO reissue(String refresh, Long id) {
 
         // redis : 10일, RT : 20일
         // RT가 기한이 남고 redis TTL이 지난 경우, 재 로그인 요청
-        redisService.checkRefreshToken(id);
+        checkRefreshToken(refresh, id);
 
         TokenDTO tokenDto = createTokens(id);
 
@@ -137,6 +137,17 @@ public class UserServiceImpl implements UserService {
         redisService.saveRefreshToken(id, tokenDto.getRefreshToken());
 
         return new TokenResponseDTO(ExceptionCode.TOKEN_REISSUED, tokenDto);
+    }
+
+    public void checkRefreshToken(String refresh, Long id) {
+        String getToken = redisService.getRefreshToken(id);
+
+        if (getToken == null) {
+            throw new CustomException(ExceptionCode.TOKEN_NOT_FOUND);
+        }
+        if (!getToken.equals(refresh)) {
+            throw new CustomException(ExceptionCode.TOKEN_NOT_FOUND);
+        }
     }
 
 }

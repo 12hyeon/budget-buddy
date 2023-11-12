@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,8 +27,9 @@ public class AuthController {
 
     @PostMapping("/reissue")
     @Operation(summary = "RT 재발급", description = "새로운 RT 토큰을 발급하거나 재 로그인을 요청합니다.")
-    public ResponseEntity<TokenResponseDTO> signIn(@AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.status(OK).body(userService.reissue(Long.valueOf(userDetails.getUsername())));
+    public ResponseEntity<TokenResponseDTO> signIn(@RequestHeader("Authorization") String refresh,
+                                                   @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.status(OK).body(userService.reissue(refresh, Long.valueOf(userDetails.getUsername())));
     }
 
 }

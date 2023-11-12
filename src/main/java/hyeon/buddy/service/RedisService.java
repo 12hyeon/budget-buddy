@@ -1,14 +1,11 @@
 package hyeon.buddy.service;
 
-import hyeon.buddy.exception.CustomException;
-import hyeon.buddy.exception.ExceptionCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -33,14 +30,6 @@ public class RedisService {
         String key = KEY_REFRESH_TOKEN + id.toString();
 
         return stringRedisTemplate.opsForValue().get(key);
-    }
-
-    @Transactional
-    public void checkRefreshToken(Long id) {
-        String key = KEY_REFRESH_TOKEN + id.toString();
-
-        Optional.ofNullable(stringRedisTemplate.opsForValue().get(key))
-                .orElseThrow(() -> new CustomException(ExceptionCode.TOKEN_NOT_FOUND));
     }
 
     @Transactional

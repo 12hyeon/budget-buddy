@@ -10,6 +10,6 @@ public interface UserService {
 
     ExceptionResponse signUp(UserSignUpRequestDTO dto);
     UserSignInResponseDTO signIn(UserSignInRequestDTO dto);
-    TokenResponseDTO reissue(Long id);
+    TokenResponseDTO reissue(String authorization, Long id);
 
 }
