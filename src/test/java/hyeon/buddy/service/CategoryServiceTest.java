@@ -38,29 +38,24 @@ public class CategoryServiceTest {
         // When
         when(categoryRepository.findByTitleContaining(dto.getTitle())).thenReturn(Optional.of(existingCategory));
 
-        CustomException exception = assertThrows(CustomException.class, () -> categoryService.saveCategory(dto));
-
         // Then
-        assertThat(exception.getExceptionCode())
-                .isEqualTo(ExceptionCode.CATEGORY_DUPLICATED_TITLE);
+        CustomException exception = assertThrows(CustomException.class, () -> categoryService.saveCategory(dto));
+        assertThat(exception.getExceptionCode()).isEqualTo(ExceptionCode.CATEGORY_DUPLICATED_TITLE);
     }
 
     @Test
     @DisplayName("10개 초과 - 카테코리 저장")
     public void testSaveCategory_WhenExceededCount_ThenThrowException() {
         // Given
-        CategoryRequestDTO dto = new CategoryRequestDTO("Duplicated Title");
+        CategoryRequestDTO dto = new CategoryRequestDTO("New Category");
         Category category = Category.from(dto);
 
         // When
         when(categoryRepository.findByTitleContaining(dto.getTitle())).thenReturn(Optional.empty());
-        when(categoryRepository.count()).thenReturn(10L);
-
-        CustomException exception = assertThrows(CustomException.class, () -> categoryService.saveCategory(dto));
+        when(categoryRepository.count()).thenReturn(11L); // 10개 초과
 
         // Then
-        assertThat(exception).isInstanceOf(CustomException.class);
+        CustomException exception = assertThrows(CustomException.class, () -> categoryService.saveCategory(dto));
         assertThat(exception.getExceptionCode()).isEqualTo(ExceptionCode.CATEGORY_EXCEEDED_COUNT);
     }
-
 }
