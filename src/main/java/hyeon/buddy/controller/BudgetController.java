@@ -6,9 +6,9 @@ import hyeon.buddy.service.BudgetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -52,10 +52,12 @@ public class BudgetController {
     public ResponseEntity<ExceptionResponse> findBudget(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "true") Boolean ascend,
-            @RequestParam(defaultValue = "0") Integer minAmount,
-            @RequestParam(defaultValue = "2000000000") Integer maxAmount,
-            @RequestParam(defaultValue = "202312") @DateTimeFormat(pattern = "yyyyMM") int startDate,
-            @RequestParam(defaultValue = "203012") @DateTimeFormat(pattern = "yyyyMM") int endDate) {
+            @RequestParam(defaultValue = "0") int minAmount,
+            @RequestParam(defaultValue = "2000000000") int maxAmount,
+            @RequestParam(defaultValue = "202311")
+            @Pattern(regexp = "^(202[0-9]|2030)(0[1-9]|1[0-2])$")String startDate,
+            @RequestParam(defaultValue = "203012")
+            @Pattern(regexp = "^(202[0-9]|2030)(0[1-9]|1[0-2])$") String endDate) {
         return ResponseEntity.status(OK).body(budgetService.findBudget(userDetails,
                 ascend, minAmount, maxAmount, startDate, endDate));
     }

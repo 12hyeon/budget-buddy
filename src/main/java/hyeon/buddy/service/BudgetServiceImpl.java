@@ -18,7 +18,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -78,29 +77,34 @@ public class BudgetServiceImpl implements BudgetService {
      */
     @Transactional
     @Override //
-    public BudgetResponseDTO findBudget(UserDetails userDetails, boolean ascend,
-                                        int minAmount, int maxAmount, int startDate, int endDate) {
+    public BudgetResponseDTO findBudget(UserDetails userDetails, boolean ascend, int minAmount,
+                                        int maxAmount, String startDate, String endDate) {
 
         // date 형식 확인
         /*if (!(Budget.checkDate(startDate) || Budget.checkDate(endDate)) {
             throw new CustomException(ExceptionCode.BUDGET_INVALID);
         }*/
 
+        int start = Integer.getInteger(startDate);
+        int end = Integer.getInteger(endDate);
+
         List<Budget> budgets;
         if (ascend) {
             budgets = budgetRepository
                     .findByUserIdAndDateBetweenAndAmountBetweenOrderByDateAsc(
                             Long.valueOf(userDetails.getUsername()),
-                            minAmount, maxAmount, startDate, endDate);
+                            minAmount, maxAmount, start, end);
         } else {
             budgets = budgetRepository
                     .findByUserIdAndDateBetweenAndAmountBetweenOrderByDateDesc(
                             Long.valueOf(userDetails.getUsername()),
-                            minAmount, maxAmount, startDate, endDate);
+                            minAmount, maxAmount, start, end);
         }
 
         List<BudgetDTO> budgetDTOList = budgets.stream().map(b -> new BudgetDTO(
-                b.getId(), b.getDate(), b.getCategory().getTitle(), b.getAmount())).toList();
+                b.getId(), b.getDate(),
+                b.getCategory().getTitle(),
+                b.getAmount())).toList();
 
         return new BudgetResponseDTO(ExceptionCode.BUDGET_FOUND_OK, budgetDTOList);
     }
@@ -128,7 +132,7 @@ public class BudgetServiceImpl implements BudgetService {
                 .orElseThrow(() -> new CustomException(ExceptionCode.BUDGET_NOT_FOUND));
 
 
-        if (budget.getDate() > getNowDate()) {
+        if (budget.getDate().isAfter(YearMonth.now())) {
             budget.updateBudget(dto.getAmount());
             return new ExceptionResponse(ExceptionCode.BUDGET_UPDATED);
         }
@@ -139,7 +143,7 @@ public class BudgetServiceImpl implements BudgetService {
     }
 
     /**
-     * 예산 삭제 (이전 달 이후)
+     * 예산 삭제 (이번 달 이후)
      *
      * @param userDetails 유저 정보
      * @param bid 예산 id
@@ -159,7 +163,7 @@ public class BudgetServiceImpl implements BudgetService {
                 .orElseThrow(() -> new CustomException(ExceptionCode.BUDGET_NOT_FOUND));
 
 
-        if (budget.getDate() > getNowDate() - 1) {
+        if (budget.getDate().isAfter(YearMonth.now())) {
             budgetRepository.delete(budget);
             return new ExceptionResponse(ExceptionCode.BUDGET_UPDATED);
         }
@@ -168,14 +172,6 @@ public class BudgetServiceImpl implements BudgetService {
         return new ExceptionResponse(ExceptionCode.BUDGET_IMMUTABLE);
     }
 
-    /* 현재 년월을 int 타입으로 변경 */
-    private int getNowDate() {
-
-        LocalDate currentDate = LocalDate.now();
-        YearMonth yearMonth = YearMonth.from(currentDate);
-
-        return yearMonth.getYear() * 100 + yearMonth.getMonthValue();
-    }
 
 
 }

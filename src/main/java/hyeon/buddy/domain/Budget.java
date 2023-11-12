@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.YearMonth;
+
 @Builder
 @Entity
 @Table(name = "budget")
@@ -29,7 +31,7 @@ public class Budget extends BaseEntity {
 
     private int amount;
 
-    private int date;
+    private YearMonth date;
 
 
     public static Budget from(BudgetSaveRequestDTO dto, User user, Category category){
@@ -37,7 +39,7 @@ public class Budget extends BaseEntity {
                 .user(user)
                 .category(category)
                 .amount(dto.getAmount())
-                .date(dto.getDate())
+                .date(YearMonth.parse(dto.getDate()))
                 .build();
 
     }
