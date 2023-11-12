@@ -14,6 +14,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.YearMonth;
+
 import static org.springframework.http.HttpStatus.OK;
 
 @Slf4j
@@ -55,9 +57,9 @@ public class BudgetController {
             @RequestParam(defaultValue = "0") int minAmount,
             @RequestParam(defaultValue = "2000000000") int maxAmount,
             @RequestParam(defaultValue = "202311")
-            @Pattern(regexp = "^(202[0-9]|2030)(0[1-9]|1[0-2])$")String startDate,
+            @Pattern(regexp = "^(202[0-9]|2030)(0[1-9]|1[0-2])$") YearMonth startDate,
             @RequestParam(defaultValue = "203012")
-            @Pattern(regexp = "^(202[0-9]|2030)(0[1-9]|1[0-2])$") String endDate) {
+            @Pattern(regexp = "^(202[0-9]|2030)(0[1-9]|1[0-2])$") YearMonth endDate) {
         return ResponseEntity.status(OK).body(budgetService.findBudget(userDetails,
                 ascend, minAmount, maxAmount, startDate, endDate));
     }

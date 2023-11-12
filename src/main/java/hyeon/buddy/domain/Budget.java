@@ -39,7 +39,7 @@ public class Budget extends BaseEntity {
                 .user(user)
                 .category(category)
                 .amount(dto.getAmount())
-                .date(YearMonth.parse(dto.getDate()))
+                .date(dto.getDate())
                 .build();
 
     }

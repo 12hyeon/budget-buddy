@@ -78,27 +78,24 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional
     @Override //
     public BudgetResponseDTO findBudget(UserDetails userDetails, boolean ascend, int minAmount,
-                                        int maxAmount, String startDate, String endDate) {
+                                        int maxAmount, YearMonth startDate, YearMonth endDate) {
 
         // date 형식 확인
         /*if (!(Budget.checkDate(startDate) || Budget.checkDate(endDate)) {
             throw new CustomException(ExceptionCode.BUDGET_INVALID);
         }*/
 
-        int start = Integer.getInteger(startDate);
-        int end = Integer.getInteger(endDate);
-
         List<Budget> budgets;
         if (ascend) {
             budgets = budgetRepository
                     .findByUserIdAndDateBetweenAndAmountBetweenOrderByDateAsc(
                             Long.valueOf(userDetails.getUsername()),
-                            minAmount, maxAmount, start, end);
+                            startDate, endDate, minAmount, maxAmount);
         } else {
             budgets = budgetRepository
                     .findByUserIdAndDateBetweenAndAmountBetweenOrderByDateDesc(
                             Long.valueOf(userDetails.getUsername()),
-                            minAmount, maxAmount, start, end);
+                            startDate, endDate, minAmount, maxAmount);
         }
 
         List<BudgetDTO> budgetDTOList = budgets.stream().map(b -> new BudgetDTO(
