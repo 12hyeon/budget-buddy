@@ -20,7 +20,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 @Slf4j
 @Tag(name = "User API", description = "유저와 관련된 API")
-@RequestMapping("/api/v1/user")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 @RestController
 public class UserController {

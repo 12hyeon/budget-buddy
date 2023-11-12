@@ -30,7 +30,7 @@ public class SecurityConfig {
              "/swagger-ui", "/swagger-config", "/swagger-ui/index.html"
     };
     private static final String[] WHITE_LIST = {
-            "/api/v1/user"
+            "/api/v1/users/**"
     };
 
     // Security 필터 체인 설정
