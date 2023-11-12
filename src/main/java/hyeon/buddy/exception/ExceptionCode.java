@@ -34,6 +34,12 @@ public enum ExceptionCode {
     TOKEN_SUCCESS(HttpStatus.OK, "T005", "토큰 확인이 성공했습니다."),
     TOKEN_REISSUED(HttpStatus.CREATED, "T006", "토큰 재발급에 성공했습니다."),
     TOKEN_NOT_FOUND(HttpStatus.CREATED, "T007", "재 로그인이 필요합니다."),
+
+    // 카테고리
+    CATEGORY_CREATED(HttpStatus.CREATED, "C000","카테고리를 생성했습니다."),
+    CATEGORY_DUPLICATED_TITLE(HttpStatus.CONFLICT, "C001","유사한 카테고리가 존재합니다."),
+    CATEGORY_EXCEEDED_COUNT(HttpStatus.CONFLICT, "C002","카테고리 개수가 10개를 초과합니다."),
+    CATEGORY_FOUND_OK(HttpStatus.OK, "C003","카테고리 조회를 성공했습니다."),
     ;
 
     private final HttpStatus status;
