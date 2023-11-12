@@ -1,12 +1,16 @@
 package hyeon.buddy.exception;
 
-import lombok.Builder;
 import lombok.Getter;
 
-@Builder
 @Getter
 public class ExceptionResponse {
-    private ExceptionCode exceptionCode;
-    private String code;
-    private String message;
+    private final int status;
+    private final String code;
+    private final String message;
+
+    public ExceptionResponse(ExceptionCode exceptionCode) {
+        this.status = exceptionCode.getStatus().value();
+        this.code = exceptionCode.getCode();
+        this.message = exceptionCode.getMessage();
+    }
 }
