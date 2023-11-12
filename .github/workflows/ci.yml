@@ -66,4 +66,4 @@ jobs:
           cat ./src/main/resources/application.yml
 
       - name: 빌드 진행
-        run: ./gradlew build --refresh-dependencies
+        run: ./gradlew build
