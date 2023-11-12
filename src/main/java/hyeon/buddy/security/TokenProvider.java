@@ -1,4 +1,4 @@
-package hyeon.buddy.config.security;
+package hyeon.buddy.security;
 
 import hyeon.buddy.exception.ExceptionCode;
 import io.jsonwebtoken.*;
@@ -24,13 +24,12 @@ public class TokenProvider {
     private Integer EXPIRATION;
 
     // refresh 여부에 따라 알맞은 AT 혹은 RT 토큰 발급
-    public String createToken(Long id, String account, boolean refresh) {
-        int time = refresh ? EXPIRATION * 3 * 60 * 24 : EXPIRATION * 60 * 24; // 3일 또는 1일
+    public String createToken(Long id, boolean refresh) {
+        int time = refresh ? EXPIRATION * 3 * 60 * 24 : EXPIRATION * 60 * 24; // RT : 20일, AT : 1일
 
         return Jwts.builder()
                 .setSubject(String.valueOf(id))
                 .claim("id", id)
-                .claim("account", account)
                 .setIssuedAt(Date.from(ZonedDateTime.now().toInstant()))
                 .setExpiration(Date.from(ZonedDateTime.now().plusDays(time).toInstant()))
                 .signWith( SignatureAlgorithm.HS256, SECRET)
@@ -48,19 +47,6 @@ public class TokenProvider {
         Long id = claims.get("id", Long.class);
 
         return String.valueOf(id);
-    }
-
-    // 토큰에서 account 추출
-    public String getAccountFromToken(String token) {
-
-        Claims claims = Jwts.parser()
-                .setSigningKey(SECRET)
-                .parseClaimsJws(token)
-                .getBody();
-
-        String name = claims.get("account", String.class);
-
-        return name;
     }
 
     // 유효한 토큰인지 확인

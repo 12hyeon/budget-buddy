@@ -1,4 +1,4 @@
-package hyeon.buddy.config.handler;
+package hyeon.buddy.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

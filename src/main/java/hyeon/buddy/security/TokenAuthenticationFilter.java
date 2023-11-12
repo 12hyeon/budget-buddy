@@ -1,4 +1,4 @@
-package hyeon.buddy.config.security;
+package hyeon.buddy.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
