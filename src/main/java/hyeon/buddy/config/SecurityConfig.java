@@ -27,7 +27,7 @@ public class SecurityConfig {
     private final UserDetailsServiceImpl userDetailsService;
 
     private static final String[] DEFAULT_LIST = {
-             "/swagger-ui", "/swagger-config", "/swagger-ui/index.html"
+            "/swagger-ui", "/swagger-config", "/swagger-ui/index.html"
     };
     private static final String[] WHITE_LIST = {
             "/api/v1/users/**"
@@ -69,4 +69,3 @@ public class SecurityConfig {
         return new TokenAuthenticationFilter(tokenProvider, userDetailsService);
     }
 }
-
