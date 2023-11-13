@@ -26,13 +26,13 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public ExceptionResponse saveCategory(CategoryRequestDTO dto) {
 
-        // 중복 체크
+        // 조건 1: 새 카테고리가 기존 카테고리의 포함 확인
         categoryRepository.findByTitleContaining(dto.getTitle())
                 .ifPresent(user -> {
                     throw new CustomException(ExceptionCode.CATEGORY_DUPLICATED_TITLE);
                 });
 
-        // 10개 미만인지 확인
+        // 조건 2 : 10개 미만인지 확인
         long count = categoryRepository.count();
         int maxCount = 10;
         if (count >= maxCount) {
@@ -42,7 +42,7 @@ public class CategoryServiceImpl implements CategoryService {
         String title = dto.getTitle();
         List<String> existingCategories = CategoryToList();
 
-        // 기존 카테고리가 새 카테고리에 포함되는지 확인
+        // 조건 3: 기존 카테고리가 새 카테고리에 포함되는지 확인
         for(String ctg : existingCategories) {
             if (title.contains(ctg)) {
                 throw new CustomException(ExceptionCode.CATEGORY_DUPLICATED_TITLE);

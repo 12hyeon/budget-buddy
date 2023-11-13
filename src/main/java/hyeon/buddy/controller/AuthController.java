@@ -27,7 +27,7 @@ public class AuthController {
 
     @PostMapping("/reissue")
     @Operation(summary = "RT 재발급", description = "새로운 RT 토큰을 발급하거나 재 로그인을 요청합니다.")
-    public ResponseEntity<TokenResponseDTO> signIn(@RequestHeader("Authorization") String refresh,
+    public ResponseEntity<TokenResponseDTO> reissue(@RequestHeader("Authorization") String refresh,
                                                    @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.status(OK).body(userService.reissue(refresh, Long.valueOf(userDetails.getUsername())));
     }
