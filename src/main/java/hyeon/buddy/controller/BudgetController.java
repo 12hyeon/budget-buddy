@@ -1,20 +1,19 @@
 package hyeon.buddy.controller;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import hyeon.buddy.dto.BudgetSaveRequestDTO;
+import hyeon.buddy.dto.BudgetUpdateRequestDTO;
 import hyeon.buddy.exception.ExceptionResponse;
 import hyeon.buddy.service.BudgetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.YearMonth;
 
 import static org.springframework.http.HttpStatus.OK;
 
@@ -30,22 +29,22 @@ public class BudgetController {
     @PostMapping
     @Operation(summary = "예산 생성", description = "새로운 예산을 생성합니다.")
     public ResponseEntity<ExceptionResponse> saveBudget(@AuthenticationPrincipal UserDetails userDetails,
-                                                    @RequestBody @Valid BudgetSaveRequestDTO dto) {
+                                                        @RequestBody @Valid BudgetSaveRequestDTO dto) {
         return ResponseEntity.status(OK).body(budgetService.saveBudget(userDetails, dto));
     }
 
     @PutMapping("/{bid}")
-    @Operation(summary = "예산 수정", description = "기존 예산을 수정합니다. (다음 달 이후)")
+    @Operation(summary = "예산 수정", description = "기존 예산의 금액을 수정합니다. (다음 달 이후)")
     public ResponseEntity<ExceptionResponse> updateBudget(@AuthenticationPrincipal UserDetails userDetails,
-                                                    @PathVariable Long bid,
-                                                    @RequestBody @Valid BudgetSaveRequestDTO dto) {
+                                                          @PathVariable Long bid,
+                                                          @RequestBody @Valid BudgetUpdateRequestDTO dto) {
         return ResponseEntity.status(OK).body(budgetService.updateBudget(userDetails, bid, dto));
     }
 
     @DeleteMapping("/{bid}")
     @Operation(summary = "예산 삭제", description = "기존 예산을 삭제합니다. (다음 달 이후)")
     public ResponseEntity<ExceptionResponse> deleteBudget(@AuthenticationPrincipal UserDetails userDetails,
-                                                    @PathVariable Long bid) {
+                                                          @PathVariable Long bid) {
         return ResponseEntity.status(OK).body(budgetService.deleteBudget(userDetails, bid));
     }
 
@@ -56,10 +55,10 @@ public class BudgetController {
             @RequestParam(defaultValue = "true") Boolean ascend,
             @RequestParam(defaultValue = "0") int minAmount,
             @RequestParam(defaultValue = "2000000000") int maxAmount,
-            @RequestParam(defaultValue = "202311")
-            @Pattern(regexp = "^(202[0-9]|2030)(0[1-9]|1[0-2])$") YearMonth startDate,
-            @RequestParam(defaultValue = "203012")
-            @Pattern(regexp = "^(202[0-9]|2030)(0[1-9]|1[0-2])$") YearMonth endDate) {
+            @RequestParam(defaultValue = "2023-11")
+            @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM") String startDate,
+            @RequestParam(defaultValue = "2030-12")
+            @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM") String endDate) {
         return ResponseEntity.status(OK).body(budgetService.findBudget(userDetails,
                 ascend, minAmount, maxAmount, startDate, endDate));
     }

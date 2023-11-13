@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.YearMonth;
-
 @Builder
 @Entity
 @Table(name = "budget")
@@ -31,26 +29,16 @@ public class Budget extends BaseEntity {
 
     private int amount;
 
-    private YearMonth date;
-
+    private String date;
 
     public static Budget from(BudgetSaveRequestDTO dto, User user, Category category){
         return Budget.builder()
                 .user(user)
                 .category(category)
                 .amount(dto.getAmount())
-                .date(dto.getDate())
+                .date(dto.getYearMonth())
                 .build();
-
     }
-
-    /*public static boolean checkDate(int date) {
-
-        int year = date%100; // 2023~2030
-        int month = date/100; // 1~12
-
-        return !(2023 > year || year > 2023 || month < 1 || month > 13);
-    }*/
 
     public void updateBudget(int amount) {
         this.amount = amount;

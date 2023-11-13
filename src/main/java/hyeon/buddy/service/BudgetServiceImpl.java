@@ -6,6 +6,7 @@ import hyeon.buddy.domain.User;
 import hyeon.buddy.dto.BudgetDTO;
 import hyeon.buddy.dto.BudgetResponseDTO;
 import hyeon.buddy.dto.BudgetSaveRequestDTO;
+import hyeon.buddy.dto.BudgetUpdateRequestDTO;
 import hyeon.buddy.exception.CustomException;
 import hyeon.buddy.exception.ExceptionCode;
 import hyeon.buddy.exception.ExceptionResponse;
@@ -42,16 +43,11 @@ public class BudgetServiceImpl implements BudgetService {
     public ExceptionResponse saveBudget(UserDetails userDetails,
                                         BudgetSaveRequestDTO dto) {
         // 예산 중복 확인
-        budgetRepository.findByUserIdAndCategoryId(
-                Long.parseLong(userDetails.getUsername()), dto.getCategory())
+        budgetRepository.findByUserIdAndCategoryIdAndDate(
+                Long.parseLong(userDetails.getUsername()), dto.getCategory(), dto.getYearMonth())
                 .ifPresent(user -> {
                     throw new CustomException(ExceptionCode.BUDGET_EXISTING);
                 });
-
-        // date 형식 확인
-        /*if (!Budget.checkDate(dto.getDate()) ) {
-            throw new CustomException(ExceptionCode.BUDGET_INVALID);
-        }*/
 
         User user = userRepository.findById(Long.valueOf(userDetails.getUsername()))
                 .orElseThrow(() -> new CustomException(ExceptionCode.USER_NOT_FOUND));
@@ -78,22 +74,18 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional
     @Override //
     public BudgetResponseDTO findBudget(UserDetails userDetails, boolean ascend, int minAmount,
-                                        int maxAmount, YearMonth startDate, YearMonth endDate) {
-
-        // date 형식 확인
-        /*if (!(Budget.checkDate(startDate) || Budget.checkDate(endDate)) {
-            throw new CustomException(ExceptionCode.BUDGET_INVALID);
-        }*/
+                                        int maxAmount, String startDate, String endDate) {
 
         List<Budget> budgets;
+
         if (ascend) {
             budgets = budgetRepository
-                    .findByUserIdAndDateBetweenAndAmountBetweenOrderByDateAsc(
+                    .findByUserIdAndDateBetweenAndAmountBetweenOrderByAmountAsc(
                             Long.valueOf(userDetails.getUsername()),
                             startDate, endDate, minAmount, maxAmount);
         } else {
             budgets = budgetRepository
-                    .findByUserIdAndDateBetweenAndAmountBetweenOrderByDateDesc(
+                    .findByUserIdAndDateBetweenAndAmountBetweenOrderByAmountDesc(
                             Long.valueOf(userDetails.getUsername()),
                             startDate, endDate, minAmount, maxAmount);
         }
@@ -117,7 +109,7 @@ public class BudgetServiceImpl implements BudgetService {
     @Transactional
     @Override
     public ExceptionResponse updateBudget(UserDetails userDetails, Long bid,
-                                          BudgetSaveRequestDTO dto) {
+                                          BudgetUpdateRequestDTO dto) {
 
         Budget budget = budgetRepository.findById(bid)
                 .map(b -> {
@@ -128,8 +120,11 @@ public class BudgetServiceImpl implements BudgetService {
                 })
                 .orElseThrow(() -> new CustomException(ExceptionCode.BUDGET_NOT_FOUND));
 
+        int date = Integer.parseInt(budget.getDate());
+        int year = date / 100;
+        int month = date % 100;
 
-        if (budget.getDate().isAfter(YearMonth.now())) {
+        if (YearMonth.of(year, month).isAfter(YearMonth.now())) {
             budget.updateBudget(dto.getAmount());
             return new ExceptionResponse(ExceptionCode.BUDGET_UPDATED);
         }
@@ -159,8 +154,11 @@ public class BudgetServiceImpl implements BudgetService {
                 })
                 .orElseThrow(() -> new CustomException(ExceptionCode.BUDGET_NOT_FOUND));
 
+        int date = Integer.parseInt(budget.getDate());
+        int year = date / 100;
+        int month = date % 100;
 
-        if (budget.getDate().isAfter(YearMonth.now())) {
+        if (YearMonth.of(year, month).isAfter(YearMonth.now())) {
             budgetRepository.delete(budget);
             return new ExceptionResponse(ExceptionCode.BUDGET_UPDATED);
         }

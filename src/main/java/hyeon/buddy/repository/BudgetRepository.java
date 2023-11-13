@@ -3,16 +3,15 @@ package hyeon.buddy.repository;
 import hyeon.buddy.domain.Budget;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
-    Optional<Budget> findByUserIdAndCategoryId(Long uid, Long cid);
+    Optional<Budget> findByUserIdAndCategoryIdAndDate(Long uid, Long cid, String yearMonth);
 
-    List<Budget> findByUserIdAndDateBetweenAndAmountBetweenOrderByDateAsc(
-            Long userId, YearMonth startDate, YearMonth endDate, int minAmount, int maxAmount);
+    List<Budget> findByUserIdAndDateBetweenAndAmountBetweenOrderByAmountAsc(
+            Long userId, String startDate, String endDate, int minAmount, int maxAmount);
 
-    List<Budget> findByUserIdAndDateBetweenAndAmountBetweenOrderByDateDesc(
-            Long userId, YearMonth startDate, YearMonth endDate, int minAmount, int maxAmount);
+    List<Budget> findByUserIdAndDateBetweenAndAmountBetweenOrderByAmountDesc(
+            Long userId, String startDate, String endDate, int minAmount, int maxAmount);
 }
