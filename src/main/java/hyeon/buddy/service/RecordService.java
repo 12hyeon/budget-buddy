@@ -1,8 +1,11 @@
 package hyeon.buddy.service;
 
+import hyeon.buddy.dto.RecommendResponseDTO;
+import org.springframework.security.core.userdetails.UserDetails;
+
 public interface RecordService {
 
     void saveDayAndMonthRecord();
-    //void recommendToday(@AuthenticationPrincipal UserDetails userDetails);
+    RecommendResponseDTO recommendToday(UserDetails userDetails);
 
 }
