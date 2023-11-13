@@ -40,6 +40,18 @@ public enum ExceptionCode {
     CATEGORY_DUPLICATED_TITLE(HttpStatus.CONFLICT, "C001","유사한 카테고리가 존재합니다."),
     CATEGORY_EXCEEDED_COUNT(HttpStatus.CONFLICT, "C002","카테고리 개수가 10개를 초과합니다."),
     CATEGORY_FOUND_OK(HttpStatus.OK, "C003","카테고리 조회를 성공했습니다."),
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "C004","카테고리를 찾을 수 없습니다."),
+
+    // 예산
+    BUDGET_CREATED(HttpStatus.CREATED, "B000", "예산 생성을 성공하였습니다."),
+    BUDGET_EXISTING(HttpStatus.OK, "B001", "존재하는 예산이 있습니다."),
+    BUDGET_IMMUTABLE(HttpStatus.CONFLICT, "B002", "변경 불가능한 예산입니다."),
+    BUDGET_UPDATED(HttpStatus.OK, "B003", "예산 수정을 완료하였습니다."),
+    BUDGET_FOUND_OK(HttpStatus.OK, "B004","예산 조회를 성공했습니다."),
+    BUDGET_INVALID(HttpStatus.BAD_REQUEST, "B005","잘못된 예산 접근입니다."),
+    BUDGET_NOT_FOUND(HttpStatus.NOT_FOUND, "B006","예산을 찾을 수 없습니다."),
+    BUDGET_DELETED(HttpStatus.OK, "B007","기존 예산을 삭제합니다."),
+
     ;
 
     private final HttpStatus status;

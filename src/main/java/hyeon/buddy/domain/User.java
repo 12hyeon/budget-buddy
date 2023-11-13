@@ -47,6 +47,7 @@ public class User extends BaseEntity {
                 .build();
 
     }
+
     public void setUserStatus(UserStatus userStatus) {
         this.userStatus = userStatus;
     }

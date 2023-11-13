@@ -8,14 +8,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.http.HttpStatus.OK;
 
-@Slf4j
-@Tag(name = "User API", description = "유저와 관련된 API")
+@Tag(name = "User API", description = "카테고리와 관련된 API")
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
 @RestController
@@ -30,7 +28,7 @@ public class CategoryController {
     }
 
     @PostMapping
-    @Operation(summary = "카테고리 추가", description = "원하는 새 카테고리를 추가합니다.") // 최대 10개
+    @Operation(summary = "카테고리 추가", description = "원하는 새 카테고리를 추가합니다.")
     public ResponseEntity<ExceptionResponse> saveCategory(@RequestBody @Valid CategoryRequestDTO dto) {
         return ResponseEntity.status(OK).body(categoryService.saveCategory(dto));
     }
