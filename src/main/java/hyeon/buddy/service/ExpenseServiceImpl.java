@@ -185,4 +185,10 @@ public class ExpenseServiceImpl implements ExpenseService {
 
     }
 
+    /* 전날 이용 기록 사용자에게 전달 => 비동기 */
+    @Override
+    public void sendFeedback() {
+
+    }
+
 }

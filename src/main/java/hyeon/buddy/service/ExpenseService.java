@@ -17,4 +17,6 @@ public interface ExpenseService {
     ExceptionResponse updateExpense(UserDetails userDetails, Long bid, ExpenseUpdateRequestDTO dto);
     ExceptionResponse deleteExpense(UserDetails userDetails, Long bid);
 
+    void sendFeedback();
+
 }

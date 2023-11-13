@@ -61,6 +61,9 @@ public enum ExceptionCode {
     EXPENSE_INVALID(HttpStatus.BAD_REQUEST, "E005", "잘못된 지출 접근입니다."),
     EXPENSE_NOT_FOUND(HttpStatus.NOT_FOUND, "E006", "지출을 찾을 수 없습니다."),
     EXPENSE_DELETED(HttpStatus.OK, "E007", "기존 지출을 삭제합니다."),
+
+    // 피드백
+    FEEDBACK_SENDER(HttpStatus.OK, "F001", "피드백을 전송하였습니다."),
     ;
 
     private final HttpStatus status;
