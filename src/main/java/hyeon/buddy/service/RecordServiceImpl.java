@@ -71,7 +71,7 @@ public class RecordServiceImpl implements RecordService {
                         uid, cid, date);// 어제 하루간 카테고리별로 지출 합산
 
                 Long budget = budgetRepository.findAmountByUserIdAndCategoryIdAndDate(
-                        uid, cid,yearMonth);
+                        uid, cid, yearMonth);
 
                 int percent = 0;
                 if (amount > 0) { // 나누기 오류 처리
@@ -101,13 +101,13 @@ public class RecordServiceImpl implements RecordService {
 
         userRepository.findAllUserIds().forEach(uid ->
         {
-            for(Long cid : cIds) {
+            for (Long cid : cIds) {
 
                 // 기존 데이터 조회
                 Optional<Record> monthRecord = recordRepository.findMonthRecords(
                         date, RecordType.MONTH, uid, cid);
                 Optional<Record> dayRecord = recordRepository.findDayRecords(
-                        date, RecordType.DAY,uid, cid);
+                        date, RecordType.DAY, uid, cid);
 
 
                 if (dayRecord.isPresent()) {
@@ -116,7 +116,7 @@ public class RecordServiceImpl implements RecordService {
                         Record day = dayRecord.get();
 
                         recordRepository.save(Record.fromMonth(
-                                day.getAmount(), uid, cid, date, day.getPercent()));
+                                day.getAmount(), uid, cid, date, 1));
 
                     } else {
                         Record month = monthRecord.get();
@@ -136,7 +136,6 @@ public class RecordServiceImpl implements RecordService {
     @Override
     public RecommendResponseDTO recommendToday(UserDetails userDetails) {
 
-
         User user = userRepository.findById(Long.valueOf(userDetails.getUsername()))
                 .orElseThrow(() -> new CustomException(ExceptionCode.USER_NOT_FOUND));
         Long uid = user.getId();
@@ -152,7 +151,7 @@ public class RecordServiceImpl implements RecordService {
         }
 
         // 이번 달을 String 형태로
-        LocalDate date = LocalDate.now().minusDays(1);
+        LocalDate date = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
         String yearMonth = YearMonth.from(date).format(formatter);
 
@@ -160,52 +159,55 @@ public class RecordServiceImpl implements RecordService {
         int standard = 1000;
 
         List<RecommendDTO> recommendDTOS = new ArrayList<>();
-        for(Category c : ctgs) {
+        for (Category c : ctgs) {
             Long cid = c.getId();
 
-            Optional<Record> record = recordRepository.findDayRecords(date, RecordType.DAY, uid, cid);
-            if (record.isPresent()) { // 이전 기록이 존재하는 경우
+            // 일주일 간 평균 사용량 계산
+            LocalDate sevenDays = LocalDate.now().minusDays(7 + 1);
+            LocalDate endDay = LocalDate.now().minusDays(1);
 
-                // 일주일 간 평균 사용량 계산
-                LocalDate sevenDays = LocalDate.now().minusDays(7 + 1);
-                LocalDate endDay = LocalDate.now().minusDays(1);
+            int total = 0;
+            int count = 0;
+            while (sevenDays.isBefore(endDay)) {
+                Long amount = expenseRepository.sumAmountByUserIdAndCategoryIdAndDate(uid, cid, sevenDays);
 
-                int total = 0;
-                int count = 0;
-                while (sevenDays.isBefore(endDay)) {
-                    Long amount = expenseRepository
-                            .sumAmountByUserIdAndCategoryIdAndDate(uid, cid, sevenDays);
-
-                    if (amount > 0) {
-                        total += amount;
-                        count += 1;
-                    }
-                    sevenDays = sevenDays.plusDays(1);
+                if (amount > 0) {
+                    total += amount;
+                    count += 1;
                 }
+                sevenDays = sevenDays.plusDays(1);
+            }
 
-                int avg = total / count;
+            int avg = (count == 0) ? 0 : total / count;
 
-                Optional<Budget> mBudget = budgetRepository.findByUserIdAndCategoryIdAndDate(uid, cid, yearMonth);
-                if (mBudget.isPresent()) {
+            //log.info("Category ID: {} Total: {}, Count: {}, Average: {}", cid, total, count, avg);
 
-                    // 이번 달 예산 및 사용한 예산
-                    int monthBudget = mBudget.get().getAmount();
-                    int usedBudget = Math.toIntExact(recordRepository.
-                            findMonthRecords(date, RecordType.MONTH, uid, cid)
-                            .map(Record::getAmount).orElse(0L));
+            Optional<Budget> mBudget = budgetRepository.findByUserIdAndCategoryIdAndDate(uid, cid, yearMonth);
+            if (mBudget.isPresent()) {
 
-                    int restBudget = monthBudget - usedBudget;
-                    int restDay = YearMonth.now().lengthOfMonth() - date.getDayOfYear();
-                    int dayBudget = monthBudget / restBudget;
+                log.info("Month Budget: {}", mBudget.get().getAmount());
 
-                    if (dayBudget > standard) { // 조건 1: 남은 예산을 나머지 날짜로 분배해서 사용
-                        recommendDTOS.add(new RecommendDTO(c.getTitle(), standard, monthBudget));
-                    } else if (total == 0 || avg <= standard) {  // 조건 2 : 일주일동안 사영한 날의 평균적인 지출을 추천
-                        recommendDTOS.add(new RecommendDTO(c.getTitle(), standard, monthBudget));
-                    } else { // 조건 3 : 1000원 이하인 경우에는 1000원 추천
-                        recommendDTOS.add(new RecommendDTO(c.getTitle(), avg, standard));
-                    }
+                // 이번 달 예산 및 사용한 예산
+                int monthBudget = mBudget.get().getAmount();
+                int usedBudget = Math.toIntExact(recordRepository.findMonthRecords(date, RecordType.MONTH, uid, cid)
+                        .map(Record::getAmount).orElse(0L));
+
+                int restBudget = monthBudget - usedBudget;
+                int restDay = YearMonth.now().lengthOfMonth() - date.getDayOfYear();
+                int dayBudget = monthBudget / restBudget;
+
+                log.info("Used Budget: {}, Remaining Budget: {}, Remaining Days: {}, Day Budget: {}",
+                        usedBudget, restBudget, restDay, dayBudget);
+
+                if (dayBudget > standard) { // 조건 1: 남은 예산을 나머지 날짜로 분배해서 사용
+                    recommendDTOS.add(new RecommendDTO(c.getTitle(), standard, monthBudget));
+                } else if (total == 0 || avg <= standard) {  // 조건 2 : 일주일동안 사영한 날의 평균적인 지출을 추천
+                    recommendDTOS.add(new RecommendDTO(c.getTitle(), standard, monthBudget));
+                } else { // 조건 3 : 1000원 이하인 경우에는 1000원 추천
+                    recommendDTOS.add(new RecommendDTO(c.getTitle(), avg, standard));
                 }
+            } else {// 조건 4 : 해당 타케고리의 예산이 없는 경우, 10000원
+                recommendDTOS.add(new RecommendDTO(c.getTitle(), avg, 10 * standard));
             }
         }
 
@@ -219,6 +221,6 @@ public class RecordServiceImpl implements RecordService {
         }
 
         return response;
-    }
 
+    }
 }

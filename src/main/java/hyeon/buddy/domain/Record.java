@@ -60,7 +60,9 @@ public class Record extends BaseEntity {
 
     public void updateAmount(Long amount) { // int percent
         this.amount += amount;
-        this.percent += percent; // 값을 누적시켜서 총 퍼센트 체크
+        if (amount > 0) {
+            this.percent += 1; // 지출한 날짜 횟수 기록
+        }
     }
 
 }

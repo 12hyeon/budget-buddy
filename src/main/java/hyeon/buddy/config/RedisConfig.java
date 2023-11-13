@@ -12,6 +12,7 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.*;
 
@@ -30,6 +31,19 @@ public class RedisConfig {
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         return new LettuceConnectionFactory(host, port);
+    }
+
+    @Bean
+    public RedisTemplate<String, String> listStringTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+        // Key 직렬화 설정
+        template.setKeySerializer(new StringRedisSerializer());
+
+        // Value 직렬화 설정
+        RedisSerializer<String> valueSerializer = new GenericToStringSerializer<>(String.class);
+        template.setValueSerializer(valueSerializer);
+        return template;
     }
 
     @Bean
@@ -60,4 +74,5 @@ public class RedisConfig {
                 .cacheDefaults(cacheConfiguration)
                 .build();
     }
+
 }

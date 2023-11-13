@@ -1,9 +1,10 @@
 package hyeon.buddy.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hyeon.buddy.dto.RecommendResponseDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class RedisService {
     private final StringRedisTemplate stringRedisTemplate;
-    private final RedisTemplate<String, RecommendResponseDTO> recommendRedisTemplate;
+    //private final RedisTemplate<String, String> jsonStringTemplate;
 
     private final static String KEY_REFRESH_TOKEN = "RT:";
     private final static String KEY_RECOMMEND = "RC:";
@@ -26,6 +27,7 @@ public class RedisService {
 
     /* 당일 예산 추천 정보를 자정까지 저장 */
 
+    // dto를 json 형태로 redis에 저장
     @Transactional
     public void saveRecommendInfo(Long id, RecommendResponseDTO dto) {
         String key = KEY_RECOMMEND + id.toString();
@@ -33,14 +35,32 @@ public class RedisService {
         LocalDateTime midnight = LocalDateTime.now().plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
         long secondsUntilMidnight = LocalDateTime.now().until(midnight, ChronoUnit.SECONDS);
 
-        recommendRedisTemplate.opsForValue().set(key, dto);
-        stringRedisTemplate.expire(key, secondsUntilMidnight, TimeUnit.SECONDS);
+        try {
+            // JSON string으로 형 변환
+            String dtoAsString = new ObjectMapper().writeValueAsString(dto);
+
+            stringRedisTemplate.opsForValue().set(key, dtoAsString);
+            stringRedisTemplate.expire(key, secondsUntilMidnight, TimeUnit.SECONDS);
+
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     @Transactional
     public RecommendResponseDTO getRecommendInfo(Long id) {
         String key = KEY_RECOMMEND + id.toString();
-        return recommendRedisTemplate.opsForValue().get(key);
+        String dtoAsString = stringRedisTemplate.opsForValue().get(key);
+
+        if (dtoAsString != null) {
+            try { // RecommendResponseDTO로 변환
+                return new ObjectMapper().readValue(dtoAsString, RecommendResponseDTO.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
     }
 
 
