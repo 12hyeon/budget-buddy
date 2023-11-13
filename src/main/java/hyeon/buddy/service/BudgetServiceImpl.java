@@ -120,10 +120,10 @@ public class BudgetServiceImpl implements BudgetService {
                 })
                 .orElseThrow(() -> new CustomException(ExceptionCode.BUDGET_NOT_FOUND));
 
-        int date = Integer.parseInt(budget.getDate());
-        int year = date / 100;
-        int month = date % 100;
+        int year = Integer.parseInt(budget.getDate().substring(0,4));
+        int month = Integer.parseInt(budget.getDate().substring(5,7));
 
+        // 이번 달 이후를 수정
         if (YearMonth.of(year, month).isAfter(YearMonth.now())) {
             budget.updateBudget(dto.getAmount());
             return new ExceptionResponse(ExceptionCode.BUDGET_UPDATED);
@@ -154,13 +154,13 @@ public class BudgetServiceImpl implements BudgetService {
                 })
                 .orElseThrow(() -> new CustomException(ExceptionCode.BUDGET_NOT_FOUND));
 
-        int date = Integer.parseInt(budget.getDate());
-        int year = date / 100;
-        int month = date % 100;
+        int year = Integer.parseInt(budget.getDate().substring(0,4));
+        int month = Integer.parseInt(budget.getDate().substring(5,7));
 
+        // 이번 달 이후를 삭제
         if (YearMonth.of(year, month).isAfter(YearMonth.now())) {
             budgetRepository.delete(budget);
-            return new ExceptionResponse(ExceptionCode.BUDGET_UPDATED);
+            return new ExceptionResponse(ExceptionCode.BUDGET_DELETED);
         }
 
         // 다음 달 이전을 수정하는 경우, 미반영
