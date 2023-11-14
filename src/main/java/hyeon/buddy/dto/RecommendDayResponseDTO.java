@@ -8,23 +8,23 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-public class RecommendResponseDTO extends ExceptionResponse {
+public class RecommendDayResponseDTO extends ExceptionResponse {
     private int count;
-    private List<RecommendDTO> budgets;
+    private List<RecommendDayDTO> budgets;
 
-    public RecommendResponseDTO() {
-        super(ExceptionCode.RECOMMEND_SENDER);
+    public RecommendDayResponseDTO() {
+        super(ExceptionCode.RECOMMEND_SENDER_DAY);
 
     }
 
     @JsonCreator
-    public RecommendResponseDTO(RecommendResponseDTO dto) {
-        super(ExceptionCode.RECOMMEND_SENDER);
+    public RecommendDayResponseDTO(RecommendDayResponseDTO dto) {
+        super(ExceptionCode.RECOMMEND_SENDER_DAY);
         this.count = dto.getCount();
         this.budgets = dto.getBudgets();
     }
 
-    public RecommendResponseDTO(ExceptionCode exceptionCode, List<RecommendDTO> budgets) {
+    public RecommendDayResponseDTO(ExceptionCode exceptionCode, List<RecommendDayDTO> budgets) {
         super(exceptionCode);
         this.count = budgets.size();
         this.budgets = budgets;

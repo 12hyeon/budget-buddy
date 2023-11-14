@@ -65,7 +65,8 @@ public enum ExceptionCode {
     // 피드백
     FEEDBACK_SENDER(HttpStatus.OK, "F001", "피드백을 전송하였습니다."),
 
-    RECOMMEND_SENDER(HttpStatus.OK, "F001", "당일 카테고리별 예산 추천을 전송하였습니다."),
+    RECOMMEND_SENDER_DAY(HttpStatus.OK, "R000", "당일 카테고리별 예산 추천을 전송하였습니다."),
+    RECOMMEND_SENDER_MONTH(HttpStatus.OK, "R001", "당월 카테고리별 예산 추천을 전송하였습니다."),
 
     // redis
     RECOMMEND_NOT_CREATED(HttpStatus.CREATED, "R000", "추천 정보 저장을 실패하였습니다."),
