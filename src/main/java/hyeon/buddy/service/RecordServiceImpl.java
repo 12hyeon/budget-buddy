@@ -134,20 +134,18 @@ public class RecordServiceImpl implements RecordService {
     /* 당일 예산 추천 */
     @Transactional
     @Override
-    public RecommendResponseDTO recommendToday(UserDetails userDetails) {
+    public Object recommendToday(UserDetails userDetails) {
 
         User user = userRepository.findById(Long.valueOf(userDetails.getUsername()))
                 .orElseThrow(() -> new CustomException(ExceptionCode.USER_NOT_FOUND));
         Long uid = user.getId();
 
         // 당일에 조회한 기록 확인
-        try {
-            RecommendResponseDTO result = redisService.getRecommendInfo(uid);
-            if (result != null) {
-                return result;
-            }
-        } catch (Exception e) {
-            log.error("Redis 연결 실패에 따른 userId(" + user.getId() + ") 예산 추천 정보 저장 오류 : ", e);
+        Object result;
+        result = redisService.getRecommendInfo(uid);
+
+        if (result != null) {
+            return result;
         }
 
         // 이번 달을 String 형태로
@@ -185,7 +183,7 @@ public class RecordServiceImpl implements RecordService {
             Optional<Budget> mBudget = budgetRepository.findByUserIdAndCategoryIdAndDate(uid, cid, yearMonth);
             if (mBudget.isPresent()) {
 
-                log.info("Month Budget: {}", mBudget.get().getAmount());
+                // log.info("Month Budget: {}", mBudget.get().getAmount());
 
                 // 이번 달 예산 및 사용한 예산
                 int monthBudget = mBudget.get().getAmount();
@@ -196,10 +194,10 @@ public class RecordServiceImpl implements RecordService {
                 int restDay = YearMonth.now().lengthOfMonth() - date.getDayOfYear();
                 int dayBudget = monthBudget / restBudget;
 
-                log.info("Used Budget: {}, Remaining Budget: {}, Remaining Days: {}, Day Budget: {}",
-                        usedBudget, restBudget, restDay, dayBudget);
+                /*log.info("Used Budget: {}, Remaining Budget: {}, Remaining Days: {}, Day Budget: {}",
+                        usedBudget, restBudget, restDay, dayBudget);*/
 
-                if (dayBudget > standard) { // 조건 1: 남은 예산을 나머지 날짜로 분배해서 사용
+                if (dayBudget > standard) { // 조건 1 : 남은 예산을 나머지 날짜로 분배해서 사용
                     recommendDTOS.add(new RecommendDTO(c.getTitle(), standard, monthBudget));
                 } else if (total == 0 || avg <= standard) {  // 조건 2 : 일주일동안 사영한 날의 평균적인 지출을 추천
                     recommendDTOS.add(new RecommendDTO(c.getTitle(), standard, monthBudget));
@@ -212,13 +210,15 @@ public class RecordServiceImpl implements RecordService {
         }
 
         RecommendResponseDTO response = new RecommendResponseDTO(ExceptionCode.RECOMMEND_SENDER, recommendDTOS);
-
-        // redis에 기록
-        try {
-            redisService.saveRecommendInfo(uid, response);
-        } catch (Exception e) {
-            log.error("Redis 연결 실패에 따른 userId(" + user.getId() + ") 예산 추천 정보 저장 오류 : ", e);
-        }
+//
+        redisService.saveRecommendInfo(uid, response);
+//        // redis에 기록
+//        try {
+//            redisService.saveRecommendInfo(uid, response);
+//        } catch (Exception e) {
+//            log.error("Redis 연결 실패에 따른 userId(" + user.getId() + ") 예산 추천 정보 저장 오류 ");
+//            throw new RedisCustomException(ExceptionCode.RECOMMEND_NOT_CREATED, recommendDTOS);
+//        }
 
         return response;
 
