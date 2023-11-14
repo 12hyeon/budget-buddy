@@ -269,7 +269,7 @@ public class RecordServiceImpl implements RecordService {
                 }
 
                 Long avg = amount / record.size();
-                recommendMonthDTOs.add(new RecommendMonthDTO(c.getTitle(), avg));
+                recommendMonthDTOs.add(new RecommendMonthDTO(c.getTitle(), avg * date.getDayOfMonth()));
             }
             else {
                 // 이전 달의 총 사용자의 평균
