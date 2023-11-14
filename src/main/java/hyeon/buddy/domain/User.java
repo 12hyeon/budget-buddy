@@ -3,12 +3,11 @@ package hyeon.buddy.domain;
 import hyeon.buddy.dto.UserSignUpRequestDTO;
 import hyeon.buddy.enums.UserRole;
 import hyeon.buddy.enums.UserStatus;
+import jakarta.persistence.*;
 import lombok.*;
 
-import jakarta.persistence.*;
-
-@Entity
 @Builder
+@Entity
 @Getter
 @Table(name = "user")
 @ToString(callSuper = true)

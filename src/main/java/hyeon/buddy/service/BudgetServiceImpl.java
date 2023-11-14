@@ -15,6 +15,8 @@ import hyeon.buddy.repository.CategoryRepository;
 import hyeon.buddy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,21 +75,25 @@ public class BudgetServiceImpl implements BudgetService {
      */
     @Transactional
     @Override //
-    public BudgetResponseDTO findBudget(UserDetails userDetails, boolean ascend, int minAmount,
-                                        int maxAmount, String startDate, String endDate) {
+    public BudgetResponseDTO findBudget(UserDetails userDetails, int page, boolean ascend,
+                                        int minAmount, int maxAmount, String startDate, String endDate) {
 
         List<Budget> budgets;
+
+        int pageCount = 10;
+        PageRequest pageRequest = PageRequest.of(page, pageCount, Sort.by("amount"));
+
 
         if (ascend) {
             budgets = budgetRepository
                     .findByUserIdAndDateBetweenAndAmountBetweenOrderByAmountAsc(
                             Long.valueOf(userDetails.getUsername()),
-                            startDate, endDate, minAmount, maxAmount);
+                            startDate, endDate, minAmount, maxAmount, pageRequest);
         } else {
             budgets = budgetRepository
                     .findByUserIdAndDateBetweenAndAmountBetweenOrderByAmountDesc(
                             Long.valueOf(userDetails.getUsername()),
-                            startDate, endDate, minAmount, maxAmount);
+                            startDate, endDate, minAmount, maxAmount, pageRequest);
         }
 
         List<BudgetDTO> budgetDTOList = budgets.stream().map(b -> new BudgetDTO(

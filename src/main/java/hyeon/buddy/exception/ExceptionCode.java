@@ -52,6 +52,25 @@ public enum ExceptionCode {
     BUDGET_NOT_FOUND(HttpStatus.NOT_FOUND, "B006","예산을 찾을 수 없습니다."),
     BUDGET_DELETED(HttpStatus.OK, "B007","기존 예산을 삭제합니다."),
 
+    // 지출
+    EXPENSE_CREATED(HttpStatus.CREATED, "E000", "지출 저장을 성공하였습니다."),
+    EXPENSE_EXISTING(HttpStatus.OK, "E001", "존재하는 중복된 지출이 있습니다."),
+    EXPENSE_IMMUTABLE(HttpStatus.CONFLICT, "E002", "변경 불가능한 지출입니다."),
+    EXPENSE_UPDATED(HttpStatus.OK, "E003", "지출 수정을 완료하였습니다."),
+    EXPENSE_FOUND_OK(HttpStatus.OK, "E004", "지출 조회를 성공했습니다."),
+    EXPENSE_INVALID(HttpStatus.BAD_REQUEST, "E005", "잘못된 지출 접근입니다."),
+    EXPENSE_NOT_FOUND(HttpStatus.NOT_FOUND, "E006", "지출을 찾을 수 없습니다."),
+    EXPENSE_DELETED(HttpStatus.OK, "E007", "기존 지출을 삭제합니다."),
+
+    // 피드백
+    FEEDBACK_SENDER(HttpStatus.OK, "F001", "피드백을 전송하였습니다."),
+
+    RECOMMEND_SENDER(HttpStatus.OK, "F001", "당일 카테고리별 예산 추천을 전송하였습니다."),
+
+    // redis
+    RECOMMEND_NOT_CREATED(HttpStatus.CREATED, "R000", "추천 정보 저장을 실패하였습니다."),
+    RECOMMEND_NOT_FOUND(HttpStatus.NOT_ACCEPTABLE, "R001", "추천 정보 조회에 실패하였습니다."),
+
     ;
 
     private final HttpStatus status;
