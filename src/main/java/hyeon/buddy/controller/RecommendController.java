@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import static org.springframework.http.HttpStatus.OK;
 
-@Tag(name = "Record API", description = "지출 합산과 관련된 API")
+@Tag(name = "Recommend API", description = "추천 관련된 API")
 @RequestMapping("/api/v1/recommends")
 @RestController
 @RequiredArgsConstructor

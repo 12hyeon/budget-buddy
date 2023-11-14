@@ -10,6 +10,8 @@ import hyeon.buddy.exception.RedisCustomException;
 import hyeon.buddy.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,7 +102,7 @@ public class RecordServiceImpl implements RecordService {
 
         // 전날이 달의 마지막 날인 경우
         boolean lastDay = date.getDayOfMonth() == date.lengthOfMonth();
-        HashMap<Long, StatisticsDTO> statist = new HashMap<>();
+        HashMap<Long, RecordDTO> statist = new HashMap<>();
 
         userRepository.findAllUserIds().forEach(uid ->
         {
@@ -132,7 +134,7 @@ public class RecordServiceImpl implements RecordService {
 
                 if (lastDay && dayRecord.isPresent()) {
                     if (statist.isEmpty()) {
-                        statist.put(cid, new StatisticsDTO(dayRecord.get().getAmount(), 1L));
+                        statist.put(cid, new RecordDTO(dayRecord.get().getAmount(), 1L));
                     } else {
                         statist.get(cid).update(dayRecord.get().getAmount());
                     }
@@ -143,7 +145,7 @@ public class RecordServiceImpl implements RecordService {
 
         if (!statist.isEmpty()) { // 한달간 총 사용 금액 및 사용자 명수 기록
             for (Long cid : statist.keySet()) {
-                StatisticsDTO st = statist.get(cid);
+                RecordDTO st = statist.get(cid);
                 statisticsRepository.save(Statistics.from(cid, st.getAmount(), st.getCount(), date));
             }
         }
@@ -262,7 +264,7 @@ public class RecordServiceImpl implements RecordService {
             List<Record> record = recordRepository.findRecordsForLastWeek(
                     date.minusDays(7), date, RecordType.MONTH, uid, cid);
 
-            if (record.size() > 0) { // 조건 1: 기존 일주일 내역 기준 평균
+            if (record.size() > 0) { // 조건 1: 기존 일주일 내역 기준 평균을 반영
                 Long amount = 0L;
                 for (Record r : record) {
                     amount += r.getAmount();
@@ -275,7 +277,7 @@ public class RecordServiceImpl implements RecordService {
                 // 이전 달의 총 사용자의 평균
                 Optional<Statistics> statistics = statisticsRepository.findStatistics(date, cid);
 
-                if (statistics.isPresent()) {  // 조건 2: 총 사용자의 지출 평균
+                if (statistics.isPresent()) {  // 조건 2: 총 사용자의 한달 지출 평균
                     Statistics s = statistics.get();
                     Long avgTotal = s.getAmount() / s.getCount();
 
@@ -289,5 +291,67 @@ public class RecordServiceImpl implements RecordService {
 
         return new RecommendMonthResponseDTO(ExceptionCode.RECOMMEND_SENDER_MONTH, recommendMonthDTOs);
 
+    }
+
+    @Override
+    public RecordResponseDTO findRecords(UserDetails userDetails, int page, boolean ascend, int minAmount,
+                                         int maxAmount, LocalDate startDate, LocalDate endDate, Long cid) {
+
+        int pageCount = 10;
+        PageRequest pageRequest = PageRequest.of(page, pageCount, Sort.by("date"));
+
+        List<Record> records;
+
+        if (cid == null) { // 전체 카테코리 조회
+            if (ascend) { // 오름차순
+                records = recordRepository
+                        .findByUserIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateAsc(
+                                Long.valueOf(userDetails.getUsername()),
+                                startDate, endDate, minAmount, maxAmount,
+                                RecordType.DAY, pageRequest);
+            } else { // 내림 차순
+                records = recordRepository
+                        .findByUserIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateDesc(
+                                Long.valueOf(userDetails.getUsername()),
+                                startDate, endDate, minAmount, maxAmount,
+                                RecordType.DAY, pageRequest);
+            }
+        } else { // 카테고리별 조회
+
+            Category category = categoryRepository.findById(cid)
+                    .orElseThrow(() -> new CustomException(ExceptionCode.CATEGORY_NOT_FOUND));
+
+            if (ascend) {
+                records = recordRepository
+                        .findByUserIdAndCategoryIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateAsc(
+                                Long.valueOf(userDetails.getUsername()), cid,
+                                startDate, endDate, minAmount, maxAmount,
+                                RecordType.DAY, pageRequest);
+            } else {
+                records = recordRepository
+                        .findByUserIdAndCategoryIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateDesc(
+                                Long.valueOf(userDetails.getUsername()), cid,
+                                startDate, endDate, minAmount, maxAmount,
+                                RecordType.DAY, pageRequest);
+            }
+        }
+
+        List<Category> ctg = categoryRepository.findAll();
+
+        List<RecordsDTO> recordsDTOList = records.stream().map(r ->
+                new RecordsDTO(
+                        r.getId(), r.getDate(),
+                        getCategoryNameByIdOrDefault(r.getCategoryId()),
+                        r.getAmount(), r.getPercent()
+                )
+        ).toList();
+
+        return new RecordResponseDTO(ExceptionCode.RECORD_FOUND_OK, recordsDTOList);
+    }
+
+    private String getCategoryNameByIdOrDefault(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .map(Category::getTitle)
+                .orElse("?");
     }
 }

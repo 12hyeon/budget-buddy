@@ -4,17 +4,17 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @AllArgsConstructor
-public class StatisticsDTO {
+public class RecordsDTO {
 
+    private Long id;
+    private LocalDate date;
+    private String category;
     private Long amount;
-    private Long count;
-
-    public void update(Long amount) {
-        this.count += 1L;
-        this.amount += amount;
-    }
+    private Integer percent;
 
 }
