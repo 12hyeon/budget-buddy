@@ -1,6 +1,5 @@
 package hyeon.buddy.controller;
 
-import hyeon.buddy.exception.ExceptionResponse;
 import hyeon.buddy.service.ExpenseService;
 import hyeon.buddy.service.RecordService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +29,7 @@ public class RecommendController {
 
     @GetMapping
     @Operation(summary = "당일 예산 추천", description = "카테고리별 당일 예산을 추천합니다.")
-    public ResponseEntity<ExceptionResponse> signUp(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Object> recommend(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.status(OK).body(recordService.recommendToday(userDetails));
     }
 }

@@ -1,11 +1,12 @@
 package hyeon.buddy.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hyeon.buddy.dto.RecommendResponseDTO;
+import hyeon.buddy.exception.CustomException;
+import hyeon.buddy.exception.ExceptionCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +18,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @RequiredArgsConstructor
 public class RedisService {
-    private final StringRedisTemplate stringRedisTemplate;
-    //private final RedisTemplate<String, String> jsonStringTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private final static String KEY_REFRESH_TOKEN = "RT:";
     private final static String KEY_RECOMMEND = "RC:";
@@ -30,7 +30,7 @@ public class RedisService {
     // dto를 json 형태로 redis에 저장
     @Transactional
     public void saveRecommendInfo(Long id, RecommendResponseDTO dto) {
-        String key = KEY_RECOMMEND + id.toString();
+        String key = KEY_RECOMMEND + id.toString(); // Use id in the key
 
         LocalDateTime midnight = LocalDateTime.now().plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
         long secondsUntilMidnight = LocalDateTime.now().until(midnight, ChronoUnit.SECONDS);
@@ -39,30 +39,31 @@ public class RedisService {
             // JSON string으로 형 변환
             String dtoAsString = new ObjectMapper().writeValueAsString(dto);
 
-            stringRedisTemplate.opsForValue().set(key, dtoAsString);
-            stringRedisTemplate.expire(key, secondsUntilMidnight, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(key, dtoAsString);
+            redisTemplate.expire(key, secondsUntilMidnight, TimeUnit.SECONDS);
 
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            log.info("userId(" + id + ")json 형변환을 통한 추천 정보 저장 실패");
+            throw new CustomException(ExceptionCode.RECOMMEND_NOT_CREATED);
         }
     }
 
+    // json 형태를 조회
     @Transactional
-    public RecommendResponseDTO getRecommendInfo(Long id) {
+    public Object getRecommendInfo(Long id) {
         String key = KEY_RECOMMEND + id.toString();
-        String dtoAsString = stringRedisTemplate.opsForValue().get(key);
-
-        if (dtoAsString != null) {
-            try { // RecommendResponseDTO로 변환
-                return new ObjectMapper().readValue(dtoAsString, RecommendResponseDTO.class);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        String json = (String) redisTemplate.opsForValue().get(key);
+        if (json == null) {
+            return json;
         }
 
-        return null;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(json, Object.class);
+        } catch (Exception e) {
+            throw new CustomException(ExceptionCode.RECOMMEND_NOT_FOUND);
+        }
     }
-
 
     /* token 처리 */
 
@@ -70,8 +71,8 @@ public class RedisService {
     public void saveRefreshToken(Long id, String refreshToken) {
         String key = KEY_REFRESH_TOKEN + id.toString();
 
-        stringRedisTemplate.opsForValue().set(key, refreshToken);
-        stringRedisTemplate.expire(key, TTL_REFRESH_TOKEN, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(key, refreshToken);
+        redisTemplate.expire(key, TTL_REFRESH_TOKEN, TimeUnit.MINUTES);
     }
 
 
@@ -79,13 +80,13 @@ public class RedisService {
     public String getRefreshToken(Long id){
         String key = KEY_REFRESH_TOKEN + id.toString();
 
-        return stringRedisTemplate.opsForValue().get(key);
+        return (String) redisTemplate.opsForValue().get(key);
     }
 
     @Transactional
     public void deleteRefreshToken(Long id){
         String key = KEY_REFRESH_TOKEN + id.toString();
 
-        stringRedisTemplate.delete(key);
+        redisTemplate.delete(key);
     }
 }

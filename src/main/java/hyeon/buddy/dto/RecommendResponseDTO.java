@@ -9,8 +9,13 @@ import java.util.List;
 
 @Getter
 public class RecommendResponseDTO extends ExceptionResponse {
-    private final int count;
-    private final List<RecommendDTO> budgets;
+    private int count;
+    private List<RecommendDTO> budgets;
+
+    public RecommendResponseDTO() {
+        super(ExceptionCode.RECOMMEND_SENDER);
+
+    }
 
     @JsonCreator
     public RecommendResponseDTO(RecommendResponseDTO dto) {
