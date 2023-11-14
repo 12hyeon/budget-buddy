@@ -1,18 +1,17 @@
 package hyeon.buddy.service;
 
-import hyeon.buddy.domain.Budget;
-import hyeon.buddy.domain.Category;
 import hyeon.buddy.domain.Record;
-import hyeon.buddy.domain.User;
-import hyeon.buddy.dto.FeedbackDTO;
-import hyeon.buddy.dto.RecommendDTO;
-import hyeon.buddy.dto.RecommendResponseDTO;
+import hyeon.buddy.domain.*;
+import hyeon.buddy.dto.*;
 import hyeon.buddy.enums.RecordType;
 import hyeon.buddy.exception.CustomException;
 import hyeon.buddy.exception.ExceptionCode;
+import hyeon.buddy.exception.RedisCustomException;
 import hyeon.buddy.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +36,7 @@ public class RecordServiceImpl implements RecordService {
     private final RecordRepository recordRepository;
     private final BudgetRepository budgetRepository;
     private final RedisService redisService;
+    private final StatisticsRepository statisticsRepository;
 
     /* 자정에 지출 합산 기록 및 피드백 전송 */
     @Transactional
@@ -99,6 +100,10 @@ public class RecordServiceImpl implements RecordService {
         List<Long> cIds = categoryRepository.findAllCategoryIds();
         LocalDate date = LocalDate.now().minusDays(1);
 
+        // 전날이 달의 마지막 날인 경우
+        boolean lastDay = date.getDayOfMonth() == date.lengthOfMonth();
+        HashMap<Long, RecordDTO> statist = new HashMap<>();
+
         userRepository.findAllUserIds().forEach(uid ->
         {
             for (Long cid : cIds) {
@@ -112,7 +117,7 @@ public class RecordServiceImpl implements RecordService {
 
                 if (dayRecord.isPresent()) {
                     // 1일인 경우 or 해당 달에 데이터가 없는 경우, 누적될 한달 지출 내역 저장
-                    if (date.getDayOfYear() == 1 || monthRecord.isEmpty()) {
+                    if (date.getYear() == 1 || monthRecord.isEmpty()) {
                         Record day = dayRecord.get();
 
                         recordRepository.save(Record.fromMonth(
@@ -126,8 +131,24 @@ public class RecordServiceImpl implements RecordService {
                         month.updateAmount(day.getAmount());
                     }
                 }
+
+                if (lastDay && dayRecord.isPresent()) {
+                    if (statist.isEmpty()) {
+                        statist.put(cid, new RecordDTO(dayRecord.get().getAmount(), 1L));
+                    } else {
+                        statist.get(cid).update(dayRecord.get().getAmount());
+                    }
+                }
             }
+
         });
+
+        if (!statist.isEmpty()) { // 한달간 총 사용 금액 및 사용자 명수 기록
+            for (Long cid : statist.keySet()) {
+                RecordDTO st = statist.get(cid);
+                statisticsRepository.save(Statistics.from(cid, st.getAmount(), st.getCount(), date));
+            }
+        }
     }
 
 
@@ -156,7 +177,7 @@ public class RecordServiceImpl implements RecordService {
         List<Category> ctgs = categoryRepository.findAll();
         int standard = 1000;
 
-        List<RecommendDTO> recommendDTOS = new ArrayList<>();
+        List<RecommendDayDTO> recommendDayDTOS = new ArrayList<>();
         for (Category c : ctgs) {
             Long cid = c.getId();
 
@@ -187,40 +208,150 @@ public class RecordServiceImpl implements RecordService {
 
                 // 이번 달 예산 및 사용한 예산
                 int monthBudget = mBudget.get().getAmount();
-                int usedBudget = Math.toIntExact(recordRepository.findMonthRecords(date, RecordType.MONTH, uid, cid)
+                int usedBudget = Math.toIntExact(recordRepository.findMonthRecords(
+                                date, RecordType.MONTH, uid, cid)
                         .map(Record::getAmount).orElse(0L));
 
                 int restBudget = monthBudget - usedBudget;
-                int restDay = YearMonth.now().lengthOfMonth() - date.getDayOfYear();
-                int dayBudget = monthBudget / restBudget;
+                int restDay = YearMonth.now().lengthOfMonth() - date.getYear();
+                int dayBudget = restBudget / restDay;
 
                 /*log.info("Used Budget: {}, Remaining Budget: {}, Remaining Days: {}, Day Budget: {}",
                         usedBudget, restBudget, restDay, dayBudget);*/
 
                 if (dayBudget > standard) { // 조건 1 : 남은 예산을 나머지 날짜로 분배해서 사용
-                    recommendDTOS.add(new RecommendDTO(c.getTitle(), standard, monthBudget));
+                    recommendDayDTOS.add(new RecommendDayDTO(c.getTitle(), standard, monthBudget));
                 } else if (total == 0 || avg <= standard) {  // 조건 2 : 일주일동안 사영한 날의 평균적인 지출을 추천
-                    recommendDTOS.add(new RecommendDTO(c.getTitle(), standard, monthBudget));
+                    recommendDayDTOS.add(new RecommendDayDTO(c.getTitle(), standard, monthBudget));
                 } else { // 조건 3 : 1000원 이하인 경우에는 1000원 추천
-                    recommendDTOS.add(new RecommendDTO(c.getTitle(), avg, standard));
+                    recommendDayDTOS.add(new RecommendDayDTO(c.getTitle(), avg, standard));
                 }
             } else {// 조건 4 : 해당 타케고리의 예산이 없는 경우, 10000원
-                recommendDTOS.add(new RecommendDTO(c.getTitle(), avg, 10 * standard));
+                recommendDayDTOS.add(new RecommendDayDTO(c.getTitle(), avg, 10 * standard));
             }
         }
 
-        RecommendResponseDTO response = new RecommendResponseDTO(ExceptionCode.RECOMMEND_SENDER, recommendDTOS);
-//
-        redisService.saveRecommendInfo(uid, response);
-//        // redis에 기록
-//        try {
-//            redisService.saveRecommendInfo(uid, response);
-//        } catch (Exception e) {
-//            log.error("Redis 연결 실패에 따른 userId(" + user.getId() + ") 예산 추천 정보 저장 오류 ");
-//            throw new RedisCustomException(ExceptionCode.RECOMMEND_NOT_CREATED, recommendDTOS);
-//        }
+        RecommendDayResponseDTO response = new RecommendDayResponseDTO(ExceptionCode.RECOMMEND_SENDER_DAY, recommendDayDTOS);
+
+        // redis에 기록
+        try {
+            redisService.saveRecommendInfo(uid, response);
+        } catch (Exception e) {
+            log.error("Redis 연결 실패에 따른 userId(" + user.getId() + ") 예산 추천 정보 저장 오류 ");
+            throw new RedisCustomException(ExceptionCode.RECOMMEND_NOT_CREATED, recommendDayDTOS);
+        }
 
         return response;
 
+    }
+
+    /* 이번 달의 카테고리별 예산 추천 */
+    @Override
+    public RecommendMonthResponseDTO recommendMonth(UserDetails userDetails) {
+        User user = userRepository.findById(Long.valueOf(userDetails.getUsername()))
+                .orElseThrow(() -> new CustomException(ExceptionCode.USER_NOT_FOUND));
+        Long uid = user.getId();
+
+        List<RecommendMonthDTO> recommendMonthDTOs = new ArrayList<>();
+        List<Category> categories = categoryRepository.findAll();
+
+        // 날짜 기준 : 이전 달
+        LocalDate date = LocalDate.now().minusMonths(1).withDayOfMonth(1);
+
+        for (Category c : categories) { // 이전 기록에 따른 평균 계산
+            Long cid = c.getId();
+
+            List<Record> record = recordRepository.findRecordsForLastWeek(
+                    date.minusDays(7), date, RecordType.MONTH, uid, cid);
+
+            if (record.size() > 0) { // 조건 1: 기존 일주일 내역 기준 평균을 반영
+                Long amount = 0L;
+                for (Record r : record) {
+                    amount += r.getAmount();
+                }
+
+                Long avg = amount / record.size();
+                recommendMonthDTOs.add(new RecommendMonthDTO(c.getTitle(), avg * date.getDayOfMonth()));
+            }
+            else {
+                // 이전 달의 총 사용자의 평균
+                Optional<Statistics> statistics = statisticsRepository.findStatistics(date, cid);
+
+                if (statistics.isPresent()) {  // 조건 2: 총 사용자의 한달 지출 평균
+                    Statistics s = statistics.get();
+                    Long avgTotal = s.getAmount() / s.getCount();
+
+                    recommendMonthDTOs.add(new RecommendMonthDTO(c.getTitle(), avgTotal));
+
+                } else { // 조건 3 : 다른 사용자의 기록도 없으면, 임의로 30만원
+                    recommendMonthDTOs.add(new RecommendMonthDTO(c.getTitle(), 300000L));
+                }
+            }
+        }
+
+        return new RecommendMonthResponseDTO(ExceptionCode.RECOMMEND_SENDER_MONTH, recommendMonthDTOs);
+
+    }
+
+    @Override
+    public RecordResponseDTO findRecords(UserDetails userDetails, int page, boolean ascend, int minAmount,
+                                         int maxAmount, LocalDate startDate, LocalDate endDate, Long cid) {
+
+        int pageCount = 10;
+        PageRequest pageRequest = PageRequest.of(page, pageCount, Sort.by("date"));
+
+        List<Record> records;
+
+        if (cid == null) { // 전체 카테코리 조회
+            if (ascend) { // 오름차순
+                records = recordRepository
+                        .findByUserIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateAsc(
+                                Long.valueOf(userDetails.getUsername()),
+                                startDate, endDate, minAmount, maxAmount,
+                                RecordType.DAY, pageRequest);
+            } else { // 내림 차순
+                records = recordRepository
+                        .findByUserIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateDesc(
+                                Long.valueOf(userDetails.getUsername()),
+                                startDate, endDate, minAmount, maxAmount,
+                                RecordType.DAY, pageRequest);
+            }
+        } else { // 카테고리별 조회
+
+            Category category = categoryRepository.findById(cid)
+                    .orElseThrow(() -> new CustomException(ExceptionCode.CATEGORY_NOT_FOUND));
+
+            if (ascend) {
+                records = recordRepository
+                        .findByUserIdAndCategoryIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateAsc(
+                                Long.valueOf(userDetails.getUsername()), cid,
+                                startDate, endDate, minAmount, maxAmount,
+                                RecordType.DAY, pageRequest);
+            } else {
+                records = recordRepository
+                        .findByUserIdAndCategoryIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateDesc(
+                                Long.valueOf(userDetails.getUsername()), cid,
+                                startDate, endDate, minAmount, maxAmount,
+                                RecordType.DAY, pageRequest);
+            }
+        }
+
+        List<Category> ctg = categoryRepository.findAll();
+
+        List<RecordsDTO> recordsDTOList = records.stream().map(r ->
+                new RecordsDTO(
+                        r.getId(), r.getDate(),
+                        getCategoryNameByIdOrDefault(r.getCategoryId()),
+                        r.getAmount(), r.getPercent()
+                )
+        ).toList();
+
+        return new RecordResponseDTO(ExceptionCode.RECORD_FOUND_OK, recordsDTOList);
+    }
+
+    private String getCategoryNameByIdOrDefault(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .map(Category::getTitle)
+                .orElse("?");
     }
 }

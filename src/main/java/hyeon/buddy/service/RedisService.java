@@ -1,7 +1,7 @@
 package hyeon.buddy.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hyeon.buddy.dto.RecommendResponseDTO;
+import hyeon.buddy.dto.RecommendDayResponseDTO;
 import hyeon.buddy.exception.CustomException;
 import hyeon.buddy.exception.ExceptionCode;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class RedisService {
 
     // dto를 json 형태로 redis에 저장
     @Transactional
-    public void saveRecommendInfo(Long id, RecommendResponseDTO dto) {
+    public void saveRecommendInfo(Long id, RecommendDayResponseDTO dto) {
         String key = KEY_RECOMMEND + id.toString(); // Use id in the key
 
         LocalDateTime midnight = LocalDateTime.now().plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import static org.springframework.http.HttpStatus.OK;
 
 @Slf4j
-@Tag(name = "Budget API", description = "예산와 관련된 API")
+@Tag(name = "Budget API", description = "예산과 관련된 API")
 @RequestMapping("/api/v1/budgets")
 @RequiredArgsConstructor
 @RestController

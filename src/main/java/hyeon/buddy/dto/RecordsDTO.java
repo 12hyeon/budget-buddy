@@ -4,12 +4,17 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @AllArgsConstructor
-public class RecommendDTO { // 사용자에게 필요한 당일 추천 예산 정보
+public class RecordsDTO {
 
+    private Long id;
+    private LocalDate date;
     private String category;
-    private int monthBudget;
-    private int todayBudget;
+    private Long amount;
+    private Integer percent;
+
 }

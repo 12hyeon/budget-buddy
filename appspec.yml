@@ -1,0 +1,23 @@
+version: 0.0
+os: linux
+
+files:
+  - source:  /
+    destination: /home/ubuntu/app # 배포될 위치
+    overwrite: yes
+
+permissions:
+  - object: /
+    pattern: "**"
+    owner: ubuntu
+    group: ubuntu
+
+hooks:
+  AfterInstall: # 최대 시간 넘으면, 배포 실패
+    - location: scripts/stop.sh
+      timeout: 180
+      runas: ubuntu
+  ApplicationStart:
+    - location: scripts/start.sh
+      timeout: 180
+      runas: ubuntu

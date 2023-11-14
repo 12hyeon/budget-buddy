@@ -20,7 +20,7 @@ import java.time.LocalDate;
 import static org.springframework.http.HttpStatus.OK;
 
 @Slf4j
-@Tag(name = "Expense API", description = "지출와 관련된 API")
+@Tag(name = "Expense API", description = "지출과 관련된 API")
 @RequestMapping("/api/v1/expenses")
 @RequiredArgsConstructor
 @RestController

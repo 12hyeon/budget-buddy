@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.http.HttpStatus.OK;
 
-@Tag(name = "User API", description = "카테고리와 관련된 API")
+@Tag(name = "Category API", description = "카테고리와 관련된 API")
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
 @RestController
