@@ -2,6 +2,7 @@ package hyeon.buddy.repository;
 
 import hyeon.buddy.domain.Record;
 import hyeon.buddy.enums.RecordType;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -41,5 +42,28 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
                                         @Param("recordType") RecordType recordType,
                                         @Param("userId") Long userId,
                                         @Param("categoryId") Long categoryId);
+
+
+    /* 통계 관련 조회 */
+
+    // 날짜 오름차순 조회
+    List<Record> findByUserIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateAsc(
+            Long userId, LocalDate startDate, LocalDate endDate,
+            int minAmount, int maxAmount, RecordType recordType, PageRequest pageable);
+
+    // 날짜 내림차순 조회
+    List<Record> findByUserIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateDesc(
+            Long userId, LocalDate startDate, LocalDate endDate,
+            int minAmount, int maxAmount, RecordType recordType, PageRequest pageable);
+
+    // 카테고리별 날짜 오름차순 조회
+    List<Record> findByUserIdAndCategoryIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateAsc(
+            Long userId, Long categoryId, LocalDate startDate, LocalDate endDate,
+            int minAmount, int maxAmount, RecordType recordType, PageRequest pageable);
+
+    // 카테고리별 날짜 내림차순 조회
+    List<Record> findByUserIdAndCategoryIdAndDateBetweenAndAmountBetweenAndTypeOrderByDateDesc(
+            Long userId, Long categoryId, LocalDate startDate, LocalDate endDate,
+            int minAmount, int maxAmount, RecordType recordType, PageRequest pageable);
 
 }
