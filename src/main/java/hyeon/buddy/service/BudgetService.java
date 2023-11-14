@@ -9,7 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 public interface BudgetService {
 
     ExceptionResponse saveBudget(UserDetails userDetails, BudgetSaveRequestDTO dto);
-    BudgetResponseDTO findBudget(UserDetails userDetails, boolean ascend,
+    BudgetResponseDTO findBudget(UserDetails userDetails, int page, boolean ascend,
                                  int minAmount, int maxAmount, String startDate, String endDate);
     ExceptionResponse updateBudget(UserDetails userDetails, Long bid, BudgetUpdateRequestDTO dto);
     ExceptionResponse deleteBudget(UserDetails userDetails, Long bid);

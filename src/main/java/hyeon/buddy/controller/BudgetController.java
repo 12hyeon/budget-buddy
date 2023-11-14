@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import static org.springframework.http.HttpStatus.OK;
 
 @Slf4j
-@Tag(name = "Budget API", description = "예산와 관련된 API")
+@Tag(name = "Budget API", description = "예산과 관련된 API")
 @RequestMapping("/api/v1/budgets")
 @RequiredArgsConstructor
 @RestController
@@ -52,6 +52,7 @@ public class BudgetController {
     @Operation(summary = "예산 조회", description = "날짜에 따라 생성한 예산을 조회합니다.")
     public ResponseEntity<ExceptionResponse> findBudget(
             @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue =  "0") int page,
             @RequestParam(defaultValue = "true") Boolean ascend,
             @RequestParam(defaultValue = "0") int minAmount,
             @RequestParam(defaultValue = "2000000000") int maxAmount,
@@ -59,7 +60,7 @@ public class BudgetController {
             @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM") String startDate,
             @RequestParam(defaultValue = "2030-12")
             @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM") String endDate) {
-        return ResponseEntity.status(OK).body(budgetService.findBudget(userDetails,
+        return ResponseEntity.status(OK).body(budgetService.findBudget(userDetails, page,
                 ascend, minAmount, maxAmount, startDate, endDate));
     }
 }
