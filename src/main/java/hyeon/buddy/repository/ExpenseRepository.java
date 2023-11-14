@@ -60,27 +60,4 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
             @Param("cid") Long categoryId,
             @Param("date") LocalDate date);
 
-//
-//    /* 한달 지출 합산 : null 0으로 처리 */
-//
-//    // 카테고리 모두
-//    @Query("SELECT COALESCE(SUM(e.amount), 0) FROM Expense e " +
-//            "WHERE e.user_id = :userId AND e.is_exception = false " +
-//            "AND YEAR(e.date) = YEAR(:date) " +
-//            "AND MONTH(e.date) = MONTH(:date)")
-//    Long sumAmountByUserIdAndMonth(
-//            @Param("userId") Long userId, @Param("date") LocalDate date);
-
-//    @Query("SELECT COALESCE(SUM(e.amount), 0) FROM Expense e " +
-//            "WHERE e.user_id = :userId AND e.category_id = :categoryId " +
-//            "AND e.is_exception = false " +
-//            "AND YEAR(e.date) = YEAR(:date) " +
-//            "AND MONTH(e.date) = MONTH(:date)")
-//    Long sumAmountByUserIdAndCategoryIdAndMonth(
-//            @Param("userId") Long userId,
-//            @Param("categoryId") Long categoryId,
-//            @Param("date") LocalDate date);
-
-
-
 }
