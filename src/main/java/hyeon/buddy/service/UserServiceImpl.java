@@ -99,8 +99,12 @@ public class UserServiceImpl implements UserService {
         // token 발급
         TokenDTO tokenDto = createTokens(user.getId());
 
-        // id 기준 RT를 redis에 저장
-        redisService.saveRefreshToken(user.getId(), tokenDto.getRefreshToken());
+        try {
+            // id 기준 RT를 redis에 저장
+            redisService.saveRefreshToken(user.getId(), tokenDto.getRefreshToken());
+        } catch (Exception e) {
+            log.error("Redis 연결 실패에 따른 userId(" + user.getId() + ") RT 저장 오류 : ", e);
+        }
 
         return new UserSignInResponseDTO(ExceptionCode.USER_LOGIN_SUCCEED, tokenDto);
     }
