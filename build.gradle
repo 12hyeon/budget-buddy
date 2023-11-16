@@ -25,6 +25,7 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.4' // ci에 따른 버전 하향
 	implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
 	implementation 'javax.servlet:javax.servlet-api:4.0.1'
+	implementation group: 'org.json', name: 'json', version: '20090211'
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
 

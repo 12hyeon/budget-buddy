@@ -10,6 +10,8 @@ public interface RecordService {
 
     void saveDayAndMonthRecord();
     Object recommendToday(UserDetails userDetails);
+    void recommendTodayAll();
+
     RecommendMonthResponseDTO recommendMonth(UserDetails userDetails);
 
     RecordResponseDTO findRecords(UserDetails userDetails, int page, boolean ascend,

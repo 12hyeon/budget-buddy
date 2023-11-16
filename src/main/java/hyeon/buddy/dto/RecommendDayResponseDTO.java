@@ -5,12 +5,9 @@ import hyeon.buddy.exception.ExceptionCode;
 import hyeon.buddy.exception.ExceptionResponse;
 import lombok.Getter;
 
-import java.util.List;
-
 @Getter
 public class RecommendDayResponseDTO extends ExceptionResponse {
-    private int count;
-    private List<RecommendDayDTO> budgets;
+    private String comment;
 
     public RecommendDayResponseDTO() {
         super(ExceptionCode.RECOMMEND_SENDER_DAY);
@@ -20,14 +17,12 @@ public class RecommendDayResponseDTO extends ExceptionResponse {
     @JsonCreator
     public RecommendDayResponseDTO(RecommendDayResponseDTO dto) {
         super(ExceptionCode.RECOMMEND_SENDER_DAY);
-        this.count = dto.getCount();
-        this.budgets = dto.getBudgets();
+        this.comment = dto.getComment();
     }
 
-    public RecommendDayResponseDTO(ExceptionCode exceptionCode, List<RecommendDayDTO> budgets) {
+    public RecommendDayResponseDTO(ExceptionCode exceptionCode, String s) {
         super(exceptionCode);
-        this.count = budgets.size();
-        this.budgets = budgets;
+        this.comment = s;
     }
 
 }
