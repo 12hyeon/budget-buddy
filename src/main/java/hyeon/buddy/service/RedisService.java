@@ -1,7 +1,5 @@
 package hyeon.buddy.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import hyeon.buddy.dto.RecommendDayResponseDTO;
 import hyeon.buddy.exception.CustomException;
 import hyeon.buddy.exception.ExceptionCode;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +20,12 @@ public class RedisService {
 
     private final static String KEY_REFRESH_TOKEN = "RT:";
     private final static String KEY_RECOMMEND = "RC:";
+    private final static String KEY_FEEDBACK = "FB:";
     private final static Integer TTL_REFRESH_TOKEN = 60 * 60 * 24 * 10; // TTL 10일로 설정
 
 
-    /* 당일 예산 추천 정보를 자정까지 저장 */
-
-    // dto를 json 형태로 redis에 저장
-    @Transactional
+    //  당일 예산 추천 정보 dto를 json 형태로 자정까지 redis에 저장
+    /*@Transactional
     public void saveRecommendInfo(Long id, RecommendDayResponseDTO dto) {
         String key = KEY_RECOMMEND + id.toString(); // Use id in the key
 
@@ -46,11 +43,29 @@ public class RedisService {
             log.info("userId(" + id + ")json 형변환을 통한 추천 정보 저장 실패");
             throw new CustomException(ExceptionCode.RECOMMEND_NOT_CREATED);
         }
+    }*/
+
+    // 당일 예산 추천 정보를 string 문자열 저장
+    @Transactional
+    public void saveRecommendInfo(Long id, String dto) {
+        String key = KEY_RECOMMEND + id.toString();
+
+        LocalDateTime midnight = LocalDateTime.now().plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        long secondsUntilMidnight = LocalDateTime.now().until(midnight, ChronoUnit.SECONDS);
+
+        try {
+            redisTemplate.opsForValue().set(key, dto);
+            redisTemplate.expire(key, secondsUntilMidnight, TimeUnit.SECONDS);
+
+        } catch (Exception e) {
+            log.info("userId(" + id + ")json 형변환을 통한 추천 정보 저장 실패");
+            throw new CustomException(ExceptionCode.RECOMMEND_NOT_CREATED);
+        }
     }
 
     // json 형태를 조회
     @Transactional
-    public Object getRecommendInfo(Long id) {
+    public String getRecommendInfo(Long id) {
         String key = KEY_RECOMMEND + id.toString();
         String json = (String) redisTemplate.opsForValue().get(key);
         if (json == null) {
@@ -58,8 +73,9 @@ public class RedisService {
         }
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(json, Object.class);
+            /*ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(json, Object.class);*/
+            return json;
         } catch (Exception e) {
             throw new CustomException(ExceptionCode.RECOMMEND_NOT_FOUND);
         }
