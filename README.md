@@ -19,7 +19,7 @@
 `통계 조회 및 기록`을 통해 더 나은 사용자 예산 관리를 제공하고, 다른 사람의 예산 및 지출과 비교한 예산 추천을 받을 수 있습니다.<br>
 
 ## 프로젝트 일정
-![image](https://github.com/12hyeon/budget-buddy/assets/67951802/9b930a15-fdd6-4dbe-856a-b60ef9afad1c)
+  ![image](https://github.com/12hyeon/budget-buddy/assets/67951802/858a66cb-8d48-467f-8097-a5205c3f34c9)
 
 ## 사용기술
 
@@ -35,7 +35,7 @@
 
 ## API
 
-![swagger](https://github.com/12hyeon/budget-buddy/assets/67951802/29e743ab-bd10-45f7-929b-682d8fa42dce)
+  ![swagger](https://github.com/12hyeon/budget-buddy/assets/67951802/29e743ab-bd10-45f7-929b-682d8fa42dce)
 
 
 ## 구현기능
@@ -98,12 +98,16 @@
   
 </details>
 
+## web hook
+- discord와 연결하여, 실제 사용자가 매일 오전 8시에 알림이 가도록 구성
+- 알림 : 카테고리별 당일 추천 예산 정보
+  
+  ![image](https://github.com/12hyeon/budget-buddy/assets/67951802/92daf134-980e-478b-aa03-d1c3077966f0)
+
 
 ## 시스템-구성도
-![시스템_구성도](https://github.com/12hyeon/budget-buddy/assets/67951802/f04ba7c3-2ed6-4668-b5ad-fda98b982145)
+  ![시스템_구성도](https://github.com/12hyeon/budget-buddy/assets/67951802/f04ba7c3-2ed6-4668-b5ad-fda98b982145)
 
 ## ERD
-![ERD](https://github.com/12hyeon/budget-buddy/assets/67951802/b49d86cc-cad2-44b9-9aac-d824b685187d)
-
-
+  ![ERD](https://github.com/12hyeon/budget-buddy/assets/67951802/b49d86cc-cad2-44b9-9aac-d824b685187d)
 
