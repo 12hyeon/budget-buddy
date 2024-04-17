@@ -35,10 +35,12 @@ public class RecordServiceImpl implements RecordService {
     private final CategoryRepository categoryRepository;
     private final RecordRepository recordRepository;
     private final BudgetRepository budgetRepository;
-    private final RedisService redisService;
     private final StatisticsRepository statisticsRepository;
 
-    /* 자정에 지출 합산 기록 및 피드백 전송 */
+    private final RedisService redisService;
+    private final WebHookService webHookService;
+
+    /* 자정에 지출 합산 기록 */
     @Transactional
     @Override
     public void saveDayAndMonthRecord() {
@@ -61,9 +63,9 @@ public class RecordServiceImpl implements RecordService {
         userRepository.findAllUserIds().forEach(uid ->
         {
             Long total = expenseRepository.sumAmountByUserIdAndDate(uid, date);
-
             /*log.info("userId :" + uid + ", total : " + total);*/
-            List<FeedbackDTO> feedbackDTOS = new ArrayList<>();
+
+            // List<FeedbackDTO> feedbackDTOS = new ArrayList<>();
 
             for (Category c : categories) {
                 Long cid = c.getId();
@@ -82,14 +84,11 @@ public class RecordServiceImpl implements RecordService {
                 // 어제 하루동안 지출 내역 저장
                 recordRepository.save(Record.fromDay(amount, uid, cid, date, percent));
 
-                // 피드백 전송 log
-                feedbackDTOS.add(new FeedbackDTO(date, c.getTitle(), amount, budget));
-                /*log.info("Expense Details: Date={}, Category={}, Amount={}, Budget={}",
-                        date, c.getTitle(), amount, budget);*/
+                // feedbackDTOS.add(new FeedbackDTO(date, c.getTitle(), amount, budget));
             }
 
-            // 피드백 전송
-            // new FeedbackResponseDTO(ExceptionCode.FEEDBACK_SENDER, total, feedbackDTOS);
+            // 당일 지출 내용 전송
+            // new FeedbackResponseDTO(ExceptionCode.FEEDBACK_SENDER, total, feedbackDTOS));
 
         });
     }
@@ -162,11 +161,12 @@ public class RecordServiceImpl implements RecordService {
         Long uid = user.getId();
 
         // 당일에 조회한 기록 확인
-        Object result;
+        String result;
         result = redisService.getRecommendInfo(uid);
 
         if (result != null) {
-            return result;
+            webHookService.callFeedbackEvent(result);
+            return new RecommendDayResponseDTO(ExceptionCode.RECOMMEND_SENDER_DAY, result);
         }
 
         // 이번 달을 String 형태로
@@ -231,17 +231,101 @@ public class RecordServiceImpl implements RecordService {
             }
         }
 
-        RecommendDayResponseDTO response = new RecommendDayResponseDTO(ExceptionCode.RECOMMEND_SENDER_DAY, recommendDayDTOS);
+        String s = webHookService.callFeedbackEvent(user.getAccount(), recommendDayDTOS);
+        RecommendDayResponseDTO response = new RecommendDayResponseDTO(ExceptionCode.RECOMMEND_SENDER_DAY, s);
 
-        // redis에 기록
+        // redis에 기록 및 예산 추천
         try {
-            redisService.saveRecommendInfo(uid, response);
+            redisService.saveRecommendInfo(uid, s);
         } catch (Exception e) {
             log.error("Redis 연결 실패에 따른 userId(" + user.getId() + ") 예산 추천 정보 저장 오류 ");
             throw new RedisCustomException(ExceptionCode.RECOMMEND_NOT_CREATED, recommendDayDTOS);
         }
 
         return response;
+
+    }
+
+    @Override
+    public void recommendTodayAll() {
+        List<User> users = userRepository.findAll();
+
+        for(User user : users) {
+            Long uid = user.getId();
+
+            // 당일에 조회한 기록 확인
+            String result;
+            result = redisService.getRecommendInfo(uid);
+
+            if (result != null) {
+                webHookService.callFeedbackEvent(result);
+            }
+
+            // 이번 달을 String 형태로
+            LocalDate date = LocalDate.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            String yearMonth = YearMonth.from(date).format(formatter);
+
+            List<Category> ctgs = categoryRepository.findAll();
+            int standard = 1000;
+
+            List<RecommendDayDTO> recommendDayDTOS = new ArrayList<>();
+            for (Category c : ctgs) {
+                Long cid = c.getId();
+
+                // 일주일 간 평균 사용량 계산
+                LocalDate sevenDays = LocalDate.now().minusDays(7 + 1);
+                LocalDate endDay = LocalDate.now().minusDays(1);
+
+                int total = 0;
+                int count = 0;
+                while (sevenDays.isBefore(endDay)) {
+                    Long amount = expenseRepository.sumAmountByUserIdAndCategoryIdAndDate(uid, cid, sevenDays);
+
+                    if (amount > 0) {
+                        total += amount;
+                        count += 1;
+                    }
+                    sevenDays = sevenDays.plusDays(1);
+                }
+
+                int avg = (count == 0) ? 0 : total / count;
+
+                Optional<Budget> mBudget = budgetRepository.findByUserIdAndCategoryIdAndDate(uid, cid, yearMonth);
+                if (mBudget.isPresent()) {
+
+                    // 이번 달 예산 및 사용한 예산
+                    int monthBudget = mBudget.get().getAmount();
+                    int usedBudget = Math.toIntExact(recordRepository.findMonthRecords(
+                                    date, RecordType.MONTH, uid, cid)
+                            .map(Record::getAmount).orElse(0L));
+
+                    int restBudget = monthBudget - usedBudget;
+                    int restDay = YearMonth.now().lengthOfMonth() - date.getYear();
+                    int dayBudget = restBudget / restDay;
+
+                    if (dayBudget > standard) { // 조건 1 : 남은 예산을 나머지 날짜로 분배해서 사용
+                        recommendDayDTOS.add(new RecommendDayDTO(c.getTitle(), standard, monthBudget));
+                    } else if (total == 0 || avg <= standard) {  // 조건 2 : 일주일동안 사영한 날의 평균적인 지출을 추천
+                        recommendDayDTOS.add(new RecommendDayDTO(c.getTitle(), standard, monthBudget));
+                    } else { // 조건 3 : 1000원 이하인 경우에는 1000원 추천
+                        recommendDayDTOS.add(new RecommendDayDTO(c.getTitle(), avg, standard));
+                    }
+                } else {// 조건 4 : 해당 타케고리의 예산이 없는 경우, 10000원
+                    recommendDayDTOS.add(new RecommendDayDTO(c.getTitle(), avg, 10 * standard));
+                }
+            }
+
+            String s = webHookService.callFeedbackEvent(user.getAccount(), recommendDayDTOS);
+
+            // redis에 기록 및 예산 추천
+            try {
+                redisService.saveRecommendInfo(uid, s);
+            } catch (Exception e) {
+                log.error("Redis 연결 실패에 따른 userId(" + user.getId() + ") 예산 추천 정보 저장 오류 ");
+                throw new RedisCustomException(ExceptionCode.RECOMMEND_NOT_CREATED, recommendDayDTOS);
+            }
+        }
 
     }
 
@@ -270,7 +354,7 @@ public class RecordServiceImpl implements RecordService {
                     amount += r.getAmount();
                 }
 
-                Long avg = amount / record.size();
+                long avg = amount / record.size();
                 recommendMonthDTOs.add(new RecommendMonthDTO(c.getTitle(), avg * date.getDayOfMonth()));
             }
             else {

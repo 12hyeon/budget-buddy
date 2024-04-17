@@ -21,4 +21,10 @@ public class RecordScheduler {
         recordService.saveDayAndMonthRecord();
     }
 
+
+    @Scheduled(cron = "8 0 0 * * *") // 매일 8시에 당일 예산 추천 정보 알림
+    public void recommendDay() {
+        recordService.recommendTodayAll();
+    }
+
 }
