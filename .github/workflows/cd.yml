@@ -1,104 +1,104 @@
-name: 프로젝트 빌드 및 업로드
-
-on:
-  pull_request:
-    branches: [ "main", "dev" ]
-  push:
-    branches: [ "main", "dev" ]
-
-permissions:
-  contents: read
-
-env:
-  AWS_REGION: ap-northeast-2
-  S3_BUCKET_NAME: private-hyeon-bucket
-  CODE_DEPLOY_APPLICATION_NAME: CICD_TEST_CD
-  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: CICD-TEST-GROUP
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: PR 및 Branch 확인
-        run: |
-          if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
-            if [[ "${{ github.event.action }}" == 'opened' || "${{ github.event.action }}" == 'synchronize' ]]; then
-              if [[ "${{ github.event.pull_request.base.ref }}" == 'dev' || "${{ github.event.pull_request.base.ref }}" == 'main' ]]; then
-                echo "Branch is allowed.";
-              else
-                echo "Branch is not allowed.";
-                exit 1;
-              fi
-            else
-              echo "Invalid action for pull request.";
-              exit 1;
-            fi
-          elif [[ "${{ github.event_name }}" == 'push' ]]; then
-            if [[ "${{ github.event.ref }}" == 'refs/heads/dev' || "${{ github.event.ref }}" == 'refs/heads/main' ]]; then
-              echo "Branch is allowed.";
-            else
-              echo "Branch is not allowed.";
-              exit 1;
-            fi
-          else
-            echo "Invalid event.";
-            exit 1;
-          fi
-
-      - name: 체크아웃
-        uses: actions/checkout@v3 # workflow 실행 전, checkout
-
-      - name: JDK 17 설정
-        uses: actions/setup-java@v2
-        with:
-          java-version: 17
-          distribution: 'adopt'
-          java-package: jdk
-          architecture: x64
-          check-latest: false
-          server-id: github
-          overwrite-settings: true
-          job-status: success
-          server-username: GITHUB_ACTOR
-          server-password: GITHUB_TOKEN
-
-      - name: 실행 권한 부여
-        run: chmod +x ./gradlew
-
-      - name: properties 생성
-        run: |
-          mkdir -p ./src/main/resources/
-          echo "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
-          cat ./src/main/resources/application.yml
-
-      - name: 빌드 진행
-        run: ./gradlew build --refresh-dependencies
-
-      - name: properties 생성
-        run: |
-          mkdir -p ./src/main/resources/
-          echo "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
-          cat ./src/main/resources/application.yml
-
-      - name: AWS 인증
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.CICD_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.CICD_SECRET_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: S3에 빌드 결과 전달
-        run: |
-          aws deploy push \
-            --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
-            --ignore-hidden-files \
-            --s3-location s3://$S3_BUCKET_NAME/$GITHUB_SHA.zip \
-            --source .
-
-      - name: S3 파일을 CodeDeploy 실행
-        run: |
-          aws deploy create-deployment \
-          --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
-          --deployment-config-name CodeDeployDefault.AllAtOnce \
-          --deployment-group-name ${{ env.CODE_DEPLOY_DEPLOYMENT_GROUP_NAME }} \
-          --s3-location bucket=$S3_BUCKET_NAME,key=$GITHUB_SHA.zip,bundleType=zip
+#name: 프로젝트 빌드 및 업로드
+#
+#on:
+#  pull_request:
+#    branches: [ "main", "dev" ]
+#  push:
+#    branches: [ "main", "dev" ]
+#
+#permissions:
+#  contents: read
+#
+#env:
+#  AWS_REGION: ap-northeast-2
+#  S3_BUCKET_NAME: private-hyeon-bucket
+#  CODE_DEPLOY_APPLICATION_NAME: CICD_TEST_CD
+#  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: CICD-TEST-GROUP
+#
+#jobs:
+#  build:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: PR 및 Branch 확인
+#        run: |
+#          if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
+#            if [[ "${{ github.event.action }}" == 'opened' || "${{ github.event.action }}" == 'synchronize' ]]; then
+#              if [[ "${{ github.event.pull_request.base.ref }}" == 'dev' || "${{ github.event.pull_request.base.ref }}" == 'main' ]]; then
+#                echo "Branch is allowed.";
+#              else
+#                echo "Branch is not allowed.";
+#                exit 1;
+#              fi
+#            else
+#              echo "Invalid action for pull request.";
+#              exit 1;
+#            fi
+#          elif [[ "${{ github.event_name }}" == 'push' ]]; then
+#            if [[ "${{ github.event.ref }}" == 'refs/heads/dev' || "${{ github.event.ref }}" == 'refs/heads/main' ]]; then
+#              echo "Branch is allowed.";
+#            else
+#              echo "Branch is not allowed.";
+#              exit 1;
+#            fi
+#          else
+#            echo "Invalid event.";
+#            exit 1;
+#          fi
+#
+#      - name: 체크아웃
+#        uses: actions/checkout@v3 # workflow 실행 전, checkout
+#
+#      - name: JDK 17 설정
+#        uses: actions/setup-java@v2
+#        with:
+#          java-version: 17
+#          distribution: 'adopt'
+#          java-package: jdk
+#          architecture: x64
+#          check-latest: false
+#          server-id: github
+#          overwrite-settings: true
+#          job-status: success
+#          server-username: GITHUB_ACTOR
+#          server-password: GITHUB_TOKEN
+#
+#      - name: 실행 권한 부여
+#        run: chmod +x ./gradlew
+#
+#      - name: properties 생성
+#        run: |
+#          mkdir -p ./src/main/resources/
+#          echo "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
+#          cat ./src/main/resources/application.yml
+#
+#      - name: 빌드 진행
+#        run: ./gradlew build --refresh-dependencies
+#
+#      - name: properties 생성
+#        run: |
+#          mkdir -p ./src/main/resources/
+#          echo "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
+#          cat ./src/main/resources/application.yml
+#
+#      - name: AWS 인증
+#        uses: aws-actions/configure-aws-credentials@v1
+#        with:
+#          aws-access-key-id: ${{ secrets.CICD_ACCESS_KEY }}
+#          aws-secret-access-key: ${{ secrets.CICD_SECRET_KEY }}
+#          aws-region: ${{ env.AWS_REGION }}
+#
+#      - name: S3에 빌드 결과 전달
+#        run: |
+#          aws deploy push \
+#            --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
+#            --ignore-hidden-files \
+#            --s3-location s3://$S3_BUCKET_NAME/$GITHUB_SHA.zip \
+#            --source .
+#
+#      - name: S3 파일을 CodeDeploy 실행
+#        run: |
+#          aws deploy create-deployment \
+#          --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
+#          --deployment-config-name CodeDeployDefault.AllAtOnce \
+#          --deployment-group-name ${{ env.CODE_DEPLOY_DEPLOYMENT_GROUP_NAME }} \
+#          --s3-location bucket=$S3_BUCKET_NAME,key=$GITHUB_SHA.zip,bundleType=zip
